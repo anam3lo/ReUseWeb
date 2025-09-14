@@ -25,7 +25,7 @@ Antes de começar, certifique-se de ter instalado:
 
 ```bash
 # Clone o repositório
-git clone https://github.com/anam3lo/ReUse-Web.git
+git clone https://github.com/anam3lo/ReUseWeb.git
 
 # Entre na pasta do projeto
 cd reuse-web
