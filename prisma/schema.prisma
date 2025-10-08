@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,22 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Modelos para NextAuth.js
 model Account {
   id                String  @id @default(cuid())
   userId            String
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -46,54 +41,43 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// Modelos principais do ReUse
 model User {
-  id            String    @id @default(cuid())
-  name          String
-  email         String    @unique
-  password      String
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  // Relacionamentos NextAuth
-  accounts      Account[]
-  sessions      Session[]
-  
-  // Relacionamentos do ReUse
-  products      Product[] @relation("ProductOwner")
-  sentMessages  Message[] @relation("MessageSender")
+  id               String    @id @default(cuid())
+  name             String
+  email            String    @unique
+  password         String
+  role             String    @default("USER")
+  ativo            Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  accounts         Account[]
   receivedMessages Message[] @relation("MessageReceiver")
+  sentMessages     Message[] @relation("MessageSender")
+  products         Product[] @relation("ProductOwner")
+  sessions         Session[]
 }
 
 model Product {
   id          String    @id @default(cuid())
   title       String
-  description String?   @db.Text
+  description String?
   image       String?
   category    String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  
-  // Chave estrangeira para o dono do produto
   ownerId     String
-  owner       User      @relation("ProductOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  
-  // Relacionamento com mensagens
   messages    Message[]
+  owner       User      @relation("ProductOwner", fields: [ownerId], references: [id], onDelete: Cascade)
 }
 
 model Message {
-  id          String    @id @default(cuid())
-  content     String    @db.Text
-  timestamp   DateTime  @default(now())
-  
-  // Chaves estrangeiras
-  senderId    String
-  receiverId  String
-  productId   String
-  
-  // Relacionamentos
-  sender      User      @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver    User      @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
-  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  content    String
+  timestamp  DateTime @default(now())
+  senderId   String
+  receiverId String
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  receiver   User     @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender     User     @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
 }
