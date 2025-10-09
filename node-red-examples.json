@@ -1,0 +1,147 @@
+{
+  "flows": [
+    {
+      "id": "maintenance-control",
+      "type": "tab",
+      "label": "Controle de Manutenção ReUseWeb",
+      "disabled": false,
+      "info": "Fluxo para controlar o modo de manutenção do ReUseWeb"
+    },
+    {
+      "id": "maintenance-toggle",
+      "type": "http request",
+      "z": "maintenance-control",
+      "name": "Toggle Maintenance",
+      "method": "POST",
+      "ret": "obj",
+      "paytoqs": "ignore",
+      "url": "http://localhost:3000/api/maintenance/control",
+      "tls": "",
+      "persist": false,
+      "proxy": "",
+      "authType": "",
+      "senderr": false,
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "x": 400,
+      "y": 200,
+      "wires": [["maintenance-response"]]
+    },
+    {
+      "id": "maintenance-response",
+      "type": "debug",
+      "z": "maintenance-control",
+      "name": "Maintenance Response",
+      "active": true,
+      "tosidebar": true,
+      "console": false,
+      "tostatus": false,
+      "complete": "payload",
+      "targetType": "msg",
+      "statusVal": "",
+      "statusType": "auto",
+      "x": 600,
+      "y": 200,
+      "wires": []
+    },
+    {
+      "id": "inject-activate",
+      "type": "inject",
+      "z": "maintenance-control",
+      "name": "Ativar Manutenção",
+      "props": [
+        {
+          "p": "payload"
+        }
+      ],
+      "repeat": "",
+      "crontab": "",
+      "once": false,
+      "onceDelay": 0.1,
+      "topic": "",
+      "payload": "{\"maintenanceMode\":true,\"maintenanceMessage\":\"Sistema em manutenção programada. Voltaremos em 2 horas!\",\"apiKey\":\"sua-chave-secreta-aqui\"}",
+      "payloadType": "json",
+      "x": 200,
+      "y": 120,
+      "wires": [["maintenance-toggle"]]
+    },
+    {
+      "id": "inject-deactivate",
+      "type": "inject",
+      "z": "maintenance-control",
+      "name": "Desativar Manutenção",
+      "props": [
+        {
+          "p": "payload"
+        }
+      ],
+      "repeat": "",
+      "crontab": "",
+      "once": false,
+      "onceDelay": 0.1,
+      "topic": "",
+      "payload": "{\"maintenanceMode\":false,\"apiKey\":\"sua-chave-secreta-aqui\"}",
+      "payloadType": "json",
+      "x": 200,
+      "y": 280,
+      "wires": [["maintenance-toggle"]]
+    },
+    {
+      "id": "status-check",
+      "type": "http request",
+      "z": "maintenance-control",
+      "name": "Status Check",
+      "method": "GET",
+      "ret": "obj",
+      "paytoqs": "ignore",
+      "url": "http://localhost:3000/api/maintenance",
+      "tls": "",
+      "persist": false,
+      "proxy": "",
+      "authType": "",
+      "senderr": false,
+      "headers": [],
+      "x": 400,
+      "y": 400,
+      "wires": [["status-response"]]
+    },
+    {
+      "id": "status-response",
+      "type": "debug",
+      "z": "maintenance-control",
+      "name": "Status Response",
+      "active": true,
+      "tosidebar": true,
+      "console": false,
+      "tostatus": false,
+      "complete": "payload",
+      "targetType": "msg",
+      "statusVal": "",
+      "statusType": "auto",
+      "x": 600,
+      "y": 400,
+      "wires": []
+    },
+    {
+      "id": "inject-status",
+      "type": "inject",
+      "z": "maintenance-control",
+      "name": "Verificar Status",
+      "props": [],
+      "repeat": "",
+      "crontab": "",
+      "once": false,
+      "onceDelay": 0.1,
+      "topic": "",
+      "payload": "",
+      "payloadType": "date",
+      "x": 200,
+      "y": 400,
+      "wires": [["status-check"]]
+    }
+  ]
+}

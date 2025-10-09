@@ -1,0 +1,333 @@
+[
+  {
+    "id": "maintenance-control",
+    "type": "tab",
+    "label": "🔧 ReUseWeb - Controle de Manutenção",
+    "disabled": false,
+    "info": "Sistema completo de controle de manutenção para ReUseWeb"
+  },
+  {
+    "id": "maintenance-activate",
+    "type": "inject",
+    "z": "maintenance-control",
+    "name": "🔴 Ativar Manutenção",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"maintenanceMode\":true,\"maintenanceMessage\":\"🛠️ ReUseWeb em manutenção programada\\n\\n⏰ Tempo estimado: 2 horas\\n📧 Contato: suporte@reuse.com\\n🔄 Sistema voltará automaticamente\",\"apiKey\":\"reuse-web-2024-secret-key\"}",
+    "payloadType": "json",
+    "x": 200,
+    "y": 120,
+    "wires": [["maintenance-request"]]
+  },
+  {
+    "id": "maintenance-deactivate",
+    "type": "inject",
+    "z": "maintenance-control",
+    "name": "🟢 Desativar Manutenção",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"maintenanceMode\":false,\"apiKey\":\"reuse-web-2024-secret-key\"}",
+    "payloadType": "json",
+    "x": 200,
+    "y": 200,
+    "wires": [["maintenance-request"]]
+  },
+  {
+    "id": "maintenance-request",
+    "type": "http request",
+    "z": "maintenance-control",
+    "name": "API ReUseWeb",
+    "method": "POST",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "http://localhost:3000/api/maintenance/control",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "senderr": false,
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "x": 450,
+    "y": 160,
+    "wires": [["maintenance-response", "slack-notification"]]
+  },
+  {
+    "id": "maintenance-response",
+    "type": "debug",
+    "z": "maintenance-control",
+    "name": "📊 Resposta da API",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 700,
+    "y": 120,
+    "wires": []
+  },
+  {
+    "id": "status-check",
+    "type": "inject",
+    "z": "maintenance-control",
+    "name": "🔍 Verificar Status",
+    "props": [],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 200,
+    "y": 320,
+    "wires": [["status-request"]]
+  },
+  {
+    "id": "status-request",
+    "type": "http request",
+    "z": "maintenance-control",
+    "name": "Status Check",
+    "method": "GET",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "http://localhost:3000/api/maintenance",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "senderr": false,
+    "headers": [],
+    "x": 450,
+    "y": 320,
+    "wires": [["status-response", "status-indicator"]]
+  },
+  {
+    "id": "status-response",
+    "type": "debug",
+    "z": "maintenance-control",
+    "name": "📈 Status Atual",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 700,
+    "y": 320,
+    "wires": []
+  },
+  {
+    "id": "auto-monitor",
+    "type": "inject",
+    "z": "maintenance-control",
+    "name": "🔄 Monitor Automático",
+    "props": [],
+    "repeat": "30",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 200,
+    "y": 420,
+    "wires": [["status-request"]]
+  },
+  {
+    "id": "scheduled-maintenance",
+    "type": "inject",
+    "z": "maintenance-control",
+    "name": "⏰ Manutenção Programada",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "0 2 * * 0",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"maintenanceMode\":true,\"maintenanceMessage\":\"🛠️ Manutenção programada aos domingos às 2h\\n\\n⏰ Duração: 2 horas\\n📧 Suporte: suporte@reuse.com\",\"apiKey\":\"reuse-web-2024-secret-key\"}",
+    "payloadType": "json",
+    "x": 200,
+    "y": 520,
+    "wires": [["maintenance-request"]]
+  },
+  {
+    "id": "slack-notification",
+    "type": "http request",
+    "z": "maintenance-control",
+    "name": "📢 Notificar Slack",
+    "method": "POST",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "https://hooks.slack.com/services/SEU/WEBHOOK/AQUI",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "senderr": false,
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "x": 700,
+    "y": 200,
+    "wires": [["slack-response"]]
+  },
+  {
+    "id": "slack-response",
+    "type": "debug",
+    "z": "maintenance-control",
+    "name": "📱 Slack Response",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 950,
+    "y": 200,
+    "wires": []
+  },
+  {
+    "id": "status-indicator",
+    "type": "function",
+    "z": "maintenance-control",
+    "name": "Status Indicator",
+    "func": "const status = msg.payload.maintenanceMode;\nconst indicator = status ? '🔴 MANUTENÇÃO ATIVA' : '🟢 SISTEMA NORMAL';\nconst message = status ? 'Sistema em manutenção' : 'Sistema operacional';\n\nmsg.payload = {\n    indicator: indicator,\n    message: message,\n    maintenanceMode: status,\n    timestamp: new Date().toLocaleString('pt-BR')\n};\n\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 700,
+    "y": 400,
+    "wires": [["status-display"]]
+  },
+  {
+    "id": "status-display",
+    "type": "debug",
+    "z": "maintenance-control",
+    "name": "📊 Status Display",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 950,
+    "y": 400,
+    "wires": []
+  },
+  {
+    "id": "email-notification",
+    "type": "http request",
+    "z": "maintenance-control",
+    "name": "📧 Notificar Email",
+    "method": "POST",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "https://api.sendgrid.com/v3/mail/send",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "bearer",
+    "senderr": false,
+    "headers": [
+      {
+        "key": "Authorization",
+        "value": "Bearer SEU_SENDGRID_API_KEY"
+      },
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "x": 700,
+    "y": 280,
+    "wires": [["email-response"]]
+  },
+  {
+    "id": "email-response",
+    "type": "debug",
+    "z": "maintenance-control",
+    "name": "📧 Email Response",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 950,
+    "y": 280,
+    "wires": []
+  },
+  {
+    "id": "maintenance-log",
+    "type": "function",
+    "z": "maintenance-control",
+    "name": "📝 Log de Manutenção",
+    "func": "const log = {\n    timestamp: new Date().toISOString(),\n    action: msg.payload.maintenanceMode ? 'ATIVADO' : 'DESATIVADO',\n    message: msg.payload.maintenanceMessage || 'N/A',\n    source: 'Node-RED'\n};\n\nconsole.log('🔧 MANUTENÇÃO:', JSON.stringify(log, null, 2));\n\nmsg.payload = log;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 700,
+    "y": 160,
+    "wires": [["log-storage"]]
+  },
+  {
+    "id": "log-storage",
+    "type": "debug",
+    "z": "maintenance-control",
+    "name": "💾 Log Storage",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 950,
+    "y": 160,
+    "wires": []
+  }
+]

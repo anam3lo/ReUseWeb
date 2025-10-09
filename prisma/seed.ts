@@ -111,10 +111,22 @@ async function main() {
     })
   }
 
+  // Criar configuração inicial do sistema
+  const config = await prisma.config.upsert({
+    where: { id: 1 },
+    update: {},
+    create: {
+      id: 1,
+      maintenanceMode: false,
+      maintenanceMessage: 'Sistema em manutenção. Voltaremos em breve!'
+    }
+  })
+
   console.log('Seed executado com sucesso!')
   console.log('Usuários criados:', 3)
   console.log('Produtos criados:', createdProducts.length)
   console.log('Mensagens criadas:', messages.length)
+  console.log('Configuração inicial criada:', config.id)
 }
 
 main()

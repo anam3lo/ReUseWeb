@@ -212,6 +212,63 @@ Se encontrar algum problema:
 3. Verifique se o banco de dados está configurado
 4. Consulte a seção "Solução de Problemas" acima
 
+## 🔧 Sistema de Manutenção
+
+### **Controle Rápido via API**
+
+#### **1. Ativar Modo de Manutenção**
+```bash
+# PowerShell
+Invoke-WebRequest -Uri "http://localhost:3000/api/maintenance/control" -Method POST -Headers @{"Content-Type"="application/json"} -Body '{"maintenanceMode":true,"maintenanceMessage":"Sistema em manutencao. Voltaremos em breve!","apiKey":"reuse-web-2024-secret-key"}'
+
+# Curl
+curl -X POST http://localhost:3000/api/maintenance/control \
+  -H "Content-Type: application/json" \
+  -d '{
+    "maintenanceMode": true,
+    "maintenanceMessage": "Sistema em manutencao. Voltaremos em breve!",
+    "apiKey": "reuse-web-2024-secret-key"
+  }'
+```
+
+#### **2. Desativar Modo de Manutenção**
+```bash
+# PowerShell
+Invoke-WebRequest -Uri "http://localhost:3000/api/maintenance/control" -Method POST -Headers @{"Content-Type"="application/json"} -Body '{"maintenanceMode":false,"apiKey":"reuse-web-2024-secret-key"}'
+
+# Curl
+curl -X POST http://localhost:3000/api/maintenance/control \
+  -H "Content-Type: application/json" \
+  -d '{
+    "maintenanceMode": false,
+    "apiKey": "reuse-web-2024-secret-key"
+  }'
+```
+
+#### **3. Verificar Status**
+```bash
+# PowerShell
+Invoke-WebRequest -Uri "http://localhost:3000/api/maintenance" -Method GET
+
+# Curl
+curl http://localhost:3000/api/maintenance
+```
+
+### **Painel Web de Controle**
+- Acesse: `http://localhost:3000/api/maintenance/panel`
+- Use os botões para ativar/desativar
+- Edite mensagens personalizadas
+
+### **Como Funciona**
+- **ATIVO**: Todas as rotas bloqueadas → Redireciona para `/maintenance`
+- **INATIVO**: Todas as rotas funcionam normalmente
+
+### **Configuração Inicial**
+```bash
+# Executar seed para criar configuração inicial
+npm run db:seed
+```
+
 ## 🎉 Pronto!
 
 Agora você pode testar todas as funcionalidades da aplicação ReUse! 
