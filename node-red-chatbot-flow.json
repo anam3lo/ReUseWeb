@@ -1,0 +1,489 @@
+[
+  {
+    "id": "chatbot-flow-start",
+    "type": "inject",
+    "z": "chatbot-flow",
+    "name": "Iniciar Chatbot",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "start",
+    "payloadType": "str",
+    "x": 120,
+    "y": 40,
+    "wires": [
+      [
+        "welcome-message"
+      ]
+    ]
+  },
+  {
+    "id": "welcome-message",
+    "type": "function",
+    "z": "chatbot-flow",
+    "name": "Mensagem de Boas-vindas",
+    "func": "// Mensagem de boas-vindas do chatbot\nconst welcomeMsg = {\n    type: \"message\",\n    content: \"👋 Olá! Sou o assistente da ReUse e vou te ajudar a cadastrar um novo produto para troca!\\n\\nVamos começar?\",\n    buttons: [\n        { text: \"Sim, vamos começar! 🚀\", value: \"start_tutorial\" },\n        { text: \"Preciso de ajuda geral ❓\", value: \"general_help\" }\n    ],\n    step: \"welcome\",\n    timestamp: new Date().toISOString()\n};\n\nmsg.payload = welcomeMsg;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 350,
+    "y": 40,
+    "wires": [
+      [
+        "log-interaction",
+        "send-response"
+      ]
+    ]
+  },
+  {
+    "id": "user-input",
+    "type": "http in",
+    "z": "chatbot-flow",
+    "name": "Receber Input do Usuário",
+    "url": "/chatbot/input",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 150,
+    "y": 120,
+    "wires": [
+      [
+        "process-input"
+      ]
+    ]
+  },
+  {
+    "id": "process-input",
+    "type": "function",
+    "z": "chatbot-flow",
+    "name": "Processar Input",
+    "func": "// Processar input do usuário\nconst userInput = msg.payload;\nconst sessionId = userInput.sessionId || 'default';\nconst message = userInput.message || '';\nconst buttonValue = userInput.buttonValue || '';\n\n// Determinar ação baseada no input\nlet action = '';\nlet step = '';\n\nif (buttonValue) {\n    action = buttonValue;\n} else if (message.toLowerCase().includes('voltar')) {\n    action = 'go_back';\n} else if (message.toLowerCase().includes('sair') || message.toLowerCase().includes('finalizar')) {\n    action = 'finish';\n} else if (message.toLowerCase().includes('repetir') || message.toLowerCase().includes('novamente')) {\n    action = 'repeat_step';\n} else {\n    action = 'next_step';\n}\n\nmsg.payload = {\n    sessionId: sessionId,\n    message: message,\n    action: action,\n    timestamp: new Date().toISOString()\n};\n\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 350,
+    "y": 120,
+    "wires": [
+      [
+        "action-router"
+      ]
+    ]
+  },
+  {
+    "id": "action-router",
+    "type": "switch",
+    "z": "chatbot-flow",
+    "name": "Roteador de Ações",
+    "property": "payload.action",
+    "propertyType": "msg",
+    "rules": [
+      {
+        "t": "eq",
+        "v": "start_tutorial",
+        "vt": "str"
+      },
+      {
+        "t": "eq",
+        "v": "general_help",
+        "vt": "str"
+      },
+      {
+        "t": "eq",
+        "v": "next_step",
+        "vt": "str"
+      },
+      {
+        "t": "eq",
+        "v": "go_back",
+        "vt": "str"
+      },
+      {
+        "t": "eq",
+        "v": "repeat_step",
+        "vt": "str"
+      },
+      {
+        "t": "eq",
+        "v": "finish",
+        "vt": "str"
+      }
+    ],
+    "checkall": "true",
+    "repair": false,
+    "outputs": 6,
+    "x": 550,
+    "y": 120,
+    "wires": [
+      [
+        "step-1-title"
+      ],
+      [
+        "general-help"
+      ],
+      [
+        "next-step-handler"
+      ],
+      [
+        "back-step-handler"
+      ],
+      [
+        "repeat-step-handler"
+      ],
+      [
+        "finish-tutorial"
+      ]
+    ]
+  },
+  {
+    "id": "step-1-title",
+    "type": "function",
+    "z": "chatbot-flow",
+    "name": "Passo 1: Título",
+    "func": "// Passo 1: Explicar sobre o título do produto\nconst step1Msg = {\n    type: \"message\",\n    content: \"📝 **PASSO 1: TÍTULO DO PRODUTO**\\n\\nO título é o nome que aparecerá na listagem do seu produto. Ele deve ser:\\n\\n✅ **Claro e descritivo**\\n✅ **Até 100 caracteres**\\n✅ **Incluir marca/modelo se aplicável**\\n\\n**Exemplos bons:**\\n• iPhone 12 em ótimo estado\\n• Mesa de escritório de madeira\\n• Livros de programação React\\n\\n**Exemplos ruins:**\\n• Vendo\\n• Item usado\\n• Produto\",\n    buttons: [\n        { text: \"Entendi! Próximo passo ➡️\", value: \"step_2\" },\n        { text: \"Ver exemplo novamente 🔄\", value: \"repeat_step_1\" },\n        { text: \"Voltar ⬅️\", value: \"go_back\" }\n    ],\n    step: \"step_1\",\n    timestamp: new Date().toISOString()\n};\n\nmsg.payload = step1Msg;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 750,
+    "y": 40,
+    "wires": [
+      [
+        "log-interaction",
+        "send-response"
+      ]
+    ]
+  },
+  {
+    "id": "step-2-category",
+    "type": "function",
+    "z": "chatbot-flow",
+    "name": "Passo 2: Categoria",
+    "func": "// Passo 2: Explicar sobre categorias\nconst step2Msg = {\n    type: \"message\",\n    content: \"🏷️ **PASSO 2: CATEGORIA DO PRODUTO**\\n\\nA categoria ajuda outros usuários a encontrar seu produto facilmente.\\n\\n**Categorias disponíveis:**\\n\\n📱 **Eletrônicos** - Celulares, computadores, tablets\\n👕 **Roupas** - Vestuário, calçados, acessórios\\n📚 **Livros** - Livros físicos e digitais\\n🪑 **Móveis** - Mesas, cadeiras, armários\\n🏠 **Casa e Jardim** - Decoração, plantas, utensílios\\n⚽ **Esportes** - Equipamentos esportivos\\n🧸 **Brinquedos** - Brinquedos para crianças\\n📦 **Outros** - Itens que não se encaixam nas categorias acima\\n\\n**Dica:** Escolha a categoria que melhor descreve seu produto!\",\n    buttons: [\n        { text: \"Entendi! Próximo passo ➡️\", value: \"step_3\" },\n        { text: \"Ver categorias novamente 🔄\", value: \"repeat_step_2\" },\n        { text: \"Voltar ⬅️\", value: \"go_back\" }\n    ],\n    step: \"step_2\",\n    timestamp: new Date().toISOString()\n};\n\nmsg.payload = step2Msg;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 750,
+    "y": 120,
+    "wires": [
+      [
+        "log-interaction",
+        "send-response"
+      ]
+    ]
+  },
+  {
+    "id": "step-3-description",
+    "type": "function",
+    "z": "chatbot-flow",
+    "name": "Passo 3: Descrição",
+    "func": "// Passo 3: Explicar sobre descrição\nconst step3Msg = {\n    type: \"message\",\n    content: \"📄 **PASSO 3: DESCRIÇÃO DO PRODUTO**\\n\\nA descrição é opcional, mas **altamente recomendada**! Ela ajuda outros usuários a entender melhor seu produto.\\n\\n**O que incluir na descrição:**\\n\\n✅ **Estado do produto** (novo, usado, seminovo)\\n✅ **Detalhes técnicos** (especificações, modelo)\\n✅ **Acessórios incluídos** (carregador, caixa, etc.)\\n✅ **Motivo da troca** (opcional)\\n✅ **Defeitos menores** (se houver)\\n\\n**Exemplo de boa descrição:**\\n\\n*\"iPhone 12 com 128GB, sem riscos na tela, bateria com 85% de saúde. Inclui carregador original, cabo USB-C e película de vidro. Troco porque comprei um modelo mais novo.\"*\\n\\n**Dica:** Seja honesto sobre o estado do produto!\",\n    buttons: [\n        { text: \"Entendi! Próximo passo ➡️\", value: \"step_4\" },\n        { text: \"Ver exemplos novamente 🔄\", value: \"repeat_step_3\" },\n        { text: \"Voltar ⬅️\", value: \"go_back\" }\n    ],\n    step: \"step_3\",\n    timestamp: new Date().toISOString()\n};\n\nmsg.payload = step3Msg;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 750,
+    "y": 200,
+    "wires": [
+      [
+        "log-interaction",
+        "send-response"
+      ]
+    ]
+  },
+  {
+    "id": "step-4-image",
+    "type": "function",
+    "z": "chatbot-flow",
+    "name": "Passo 4: Imagem",
+    "func": "// Passo 4: Explicar sobre imagem\nconst step4Msg = {\n    type: \"message\",\n    content: \"📸 **PASSO 4: IMAGEM DO PRODUTO**\\n\\nUma boa imagem aumenta muito as chances de troca!\\n\\n**Como adicionar imagem:**\\n\\n**Opção 1 - Upload de arquivo:**\\n• Clique em 'Upload de Arquivo'\\n• Selecione uma foto do seu dispositivo\\n• Formatos aceitos: JPG, PNG, GIF\\n\\n**Opção 2 - URL da imagem:**\\n• Cole o link de uma imagem da internet\\n• Certifique-se que a URL está funcionando\\n\\n**Dicas para uma boa foto:**\\n\\n✅ **Boa iluminação** - Evite fotos escuras\\n✅ **Produto em destaque** - Evite fundos bagunçados\\n✅ **Múltiplos ângulos** - Se possível, várias fotos\\n✅ **Mostre detalhes** - Especialmente se houver defeitos\\n\\n**Lembre-se:** A imagem é opcional, mas produtos com foto têm 3x mais visualizações!\",\n    buttons: [\n        { text: \"Entendi! Próximo passo ➡️\", value: \"step_5\" },\n        { text: \"Ver dicas novamente 🔄\", value: \"repeat_step_4\" },\n        { text: \"Voltar ⬅️\", value: \"go_back\" }\n    ],\n    step: \"step_4\",\n    timestamp: new Date().toISOString()\n};\n\nmsg.payload = step4Msg;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 750,
+    "y": 280,
+    "wires": [
+      [
+        "log-interaction",
+        "send-response"
+      ]
+    ]
+  },
+  {
+    "id": "step-5-final",
+    "type": "function",
+    "z": "chatbot-flow",
+    "name": "Passo 5: Finalização",
+    "func": "// Passo 5: Resumo final e próximos passos\nconst step5Msg = {\n    type: \"message\",\n    content: \"🎉 **PARABÉNS! Você aprendeu como cadastrar um produto!**\\n\\n**📋 RESUMO DO QUE APRENDEMOS:**\\n\\n1️⃣ **Título** - Claro e descritivo\\n2️⃣ **Categoria** - Escolha a mais adequada\\n3️⃣ **Descrição** - Detalhe o estado e características\\n4️⃣ **Imagem** - Foto de qualidade (opcional)\\n\\n**🚀 PRÓXIMOS PASSOS:**\\n\\n1. Acesse a página 'Anunciar Produto'\\n2. Preencha os campos seguindo nossas dicas\\n3. Revise todas as informações\\n4. Clique em 'Anunciar Produto'\\n5. Aguarde a aprovação (se necessário)\\n\\n**💡 DICAS EXTRAS:**\\n\\n• Seja honesto sobre o estado do produto\\n• Responda mensagens de interessados rapidamente\\n• Mantenha suas informações de contato atualizadas\\n• Considere trocar por produtos de valor similar\\n\\n**Precisa de mais ajuda?** Estou sempre aqui! 😊\",\n    buttons: [\n        { text: \"Ir para cadastro de produto 🚀\", value: \"go_to_form\" },\n        { text: \"Revisar tutorial 🔄\", value: \"restart_tutorial\" },\n        { text: \"Preciso de mais ajuda ❓\", value: \"general_help\" },\n        { text: \"Finalizar ✅\", value: \"finish\" }\n    ],\n    step: \"step_5\",\n    timestamp: new Date().toISOString()\n};\n\nmsg.payload = step5Msg;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 750,
+    "y": 360,
+    "wires": [
+      [
+        "log-interaction",
+        "send-response"
+      ]
+    ]
+  },
+  {
+    "id": "general-help",
+    "type": "function",
+    "z": "chatbot-flow",
+    "name": "Ajuda Geral",
+    "func": "// Ajuda geral sobre a plataforma\nconst helpMsg = {\n    type: \"message\",\n    content: \"❓ **AJUDA GERAL - PLATAFORMA REUSE**\\n\\n**🌱 O que é a ReUse?**\\nA ReUse é uma plataforma que conecta pessoas para trocar itens usados, promovendo sustentabilidade e economia circular.\\n\\n**🔍 COMO FUNCIONA:**\\n\\n1️⃣ **Cadastre-se** - Crie sua conta gratuitamente\\n2️⃣ **Anuncie produtos** - Publique itens que você não usa mais\\n3️⃣ **Procure produtos** - Encontre itens que você precisa\\n4️⃣ **Troque** - Negocie trocas com outros usuários\\n\\n**💬 SISTEMA DE MENSAGENS:**\\n• Converse diretamente com outros usuários\\n• Negocie detalhes da troca\\n• Combine local e forma de entrega\\n\\n**🛡️ SEGURANÇA:**\\n• Todos os usuários são verificados\\n• Sistema de avaliações\\n• Suporte ao cliente disponível\\n\\n**📞 CONTATO:**\\n• Email: suporte@reuse.com.br\\n• WhatsApp: (11) 99999-9999\\n• Horário: Segunda a Sexta, 9h às 18h\",\n    buttons: [\n        { text: \"Voltar ao tutorial 📝\", value: \"start_tutorial\" },\n        { text: \"Preciso de suporte técnico 🔧\", value: \"tech_support\" },\n        { text: \"Finalizar ✅\", value: \"finish\" }\n    ],\n    step: \"general_help\",\n    timestamp: new Date().toISOString()\n};\n\nmsg.payload = helpMsg;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 750,
+    "y": 80,
+    "wires": [
+      [
+        "log-interaction",
+        "send-response"
+      ]
+    ]
+  },
+  {
+    "id": "next-step-handler",
+    "type": "function",
+    "z": "chatbot-flow",
+    "name": "Próximo Passo",
+    "func": "// Determinar próximo passo baseado no contexto atual\nconst currentStep = msg.payload.step || 'welcome';\nlet nextStep = '';\n\nswitch(currentStep) {\n    case 'welcome':\n        nextStep = 'step_1';\n        break;\n    case 'step_1':\n        nextStep = 'step_2';\n        break;\n    case 'step_2':\n        nextStep = 'step_3';\n        break;\n    case 'step_3':\n        nextStep = 'step_4';\n        break;\n    case 'step_4':\n        nextStep = 'step_5';\n        break;\n    default:\n        nextStep = 'step_1';\n}\n\nmsg.payload = { action: nextStep };\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 750,
+    "y": 160,
+    "wires": [
+      [
+        "step-router"
+      ]
+    ]
+  },
+  {
+    "id": "back-step-handler",
+    "type": "function",
+    "z": "chatbot-flow",
+    "name": "Voltar Passo",
+    "func": "// Determinar passo anterior baseado no contexto atual\nconst currentStep = msg.payload.step || 'welcome';\nlet previousStep = '';\n\nswitch(currentStep) {\n    case 'step_1':\n        previousStep = 'welcome';\n        break;\n    case 'step_2':\n        previousStep = 'step_1';\n        break;\n    case 'step_3':\n        previousStep = 'step_2';\n        break;\n    case 'step_4':\n        previousStep = 'step_3';\n        break;\n    case 'step_5':\n        previousStep = 'step_4';\n        break;\n    default:\n        previousStep = 'welcome';\n}\n\nmsg.payload = { action: previousStep };\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 750,
+    "y": 200,
+    "wires": [
+      [
+        "step-router"
+      ]
+    ]
+  },
+  {
+    "id": "repeat-step-handler",
+    "type": "function",
+    "z": "chatbot-flow",
+    "name": "Repetir Passo",
+    "func": "// Repetir o passo atual\nconst currentStep = msg.payload.step || 'welcome';\nmsg.payload = { action: currentStep };\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 750,
+    "y": 240,
+    "wires": [
+      [
+        "step-router"
+      ]
+    ]
+  },
+  {
+    "id": "step-router",
+    "type": "switch",
+    "z": "chatbot-flow",
+    "name": "Roteador de Passos",
+    "property": "payload.action",
+    "propertyType": "msg",
+    "rules": [
+      {
+        "t": "eq",
+        "v": "welcome",
+        "vt": "str"
+      },
+      {
+        "t": "eq",
+        "v": "step_1",
+        "vt": "str"
+      },
+      {
+        "t": "eq",
+        "v": "step_2",
+        "vt": "str"
+      },
+      {
+        "t": "eq",
+        "v": "step_3",
+        "vt": "str"
+      },
+      {
+        "t": "eq",
+        "v": "step_4",
+        "vt": "str"
+      },
+      {
+        "t": "eq",
+        "v": "step_5",
+        "vt": "str"
+      }
+    ],
+    "checkall": "true",
+    "repair": false,
+    "outputs": 6,
+    "x": 950,
+    "y": 180,
+    "wires": [
+      [
+        "welcome-message"
+      ],
+      [
+        "step-1-title"
+      ],
+      [
+        "step-2-category"
+      ],
+      [
+        "step-3-description"
+      ],
+      [
+        "step-4-image"
+      ],
+      [
+        "step-5-final"
+      ]
+    ]
+  },
+  {
+    "id": "finish-tutorial",
+    "type": "function",
+    "z": "chatbot-flow",
+    "name": "Finalizar Tutorial",
+    "func": "// Mensagem de finalização\nconst finishMsg = {\n    type: \"message\",\n    content: \"✅ **Tutorial finalizado!**\\n\\nObrigado por usar o assistente da ReUse!\\n\\n**Lembre-se:**\\n• Seja honesto sobre o estado dos produtos\\n• Responda mensagens rapidamente\\n• Mantenha suas informações atualizadas\\n\\n**Precisa de ajuda?** Estou sempre aqui! 😊\\n\\n**Boa sorte com suas trocas!** 🌱♻️\",\n    buttons: [\n        { text: \"Iniciar novo tutorial 🔄\", value: \"start_tutorial\" },\n        { text: \"Ir para a plataforma 🚀\", value: \"go_to_platform\" }\n    ],\n    step: \"finished\",\n    timestamp: new Date().toISOString()\n};\n\nmsg.payload = finishMsg;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 750,
+    "y": 320,
+    "wires": [
+      [
+        "log-interaction",
+        "send-response"
+      ]
+    ]
+  },
+  {
+    "id": "log-interaction",
+    "type": "function",
+    "z": "chatbot-flow",
+    "name": "Log de Interação",
+    "func": "// Log de todas as interações com timestamp\nconst logData = {\n    timestamp: new Date().toISOString(),\n    sessionId: msg.payload.sessionId || 'default',\n    step: msg.payload.step || 'unknown',\n    message: msg.payload.content || '',\n    type: msg.payload.type || 'message',\n    userAgent: msg.req ? msg.req.headers['user-agent'] : 'unknown',\n    ip: msg.req ? msg.req.connection.remoteAddress : 'unknown'\n};\n\n// Log no console do Node-RED\nconsole.log('🤖 CHATBOT INTERACTION:', JSON.stringify(logData, null, 2));\n\n// Salvar em arquivo de log (opcional)\n// node.error('CHATBOT_LOG: ' + JSON.stringify(logData));\n\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 1050,
+    "y": 100,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "send-response",
+    "type": "http response",
+    "z": "chatbot-flow",
+    "name": "Enviar Resposta",
+    "statusCode": "200",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "x": 1050,
+    "y": 40,
+    "wires": []
+  },
+  {
+    "id": "api-help-endpoint",
+    "type": "http in",
+    "z": "chatbot-flow",
+    "name": "API Help Endpoint",
+    "url": "/api/chatbot/help",
+    "method": "get",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 150,
+    "y": 200,
+    "wires": [
+      [
+        "help-api-response"
+      ]
+    ]
+  },
+  {
+    "id": "help-api-response",
+    "type": "function",
+    "z": "chatbot-flow",
+    "name": "Resposta API Help",
+    "func": "// Resposta para consultas externas via API\nconst helpData = {\n    chatbot: {\n        name: \"ReUse Assistant\",\n        version: \"1.0.0\",\n        description: \"Assistente para orientação de cadastro de produtos na plataforma ReUse\",\n        capabilities: [\n            \"Tutorial passo a passo para cadastro de produtos\",\n            \"Orientações sobre título, categoria, descrição e imagem\",\n            \"Dicas de boas práticas\",\n            \"Ajuda geral sobre a plataforma\"\n        ],\n        endpoints: {\n            \"start\": \"/chatbot/input - POST - Iniciar conversa\",\n            \"help\": \"/api/chatbot/help - GET - Informações sobre o chatbot\"\n        },\n        steps: [\n            {\n                step: 1,\n                title: \"Título do Produto\",\n                description: \"Orientações sobre como criar um título claro e descritivo\"\n            },\n            {\n                step: 2,\n                title: \"Categoria\",\n                description: \"Explicação das categorias disponíveis\"\n            },\n            {\n                step: 3,\n                title: \"Descrição\",\n                description: \"Dicas para escrever uma boa descrição\"\n            },\n            {\n                step: 4,\n                title: \"Imagem\",\n                description: \"Orientações sobre upload e qualidade de imagens\"\n            },\n            {\n                step: 5,\n                title: \"Finalização\",\n                description: \"Resumo e próximos passos\"\n            }\n        ]\n    },\n    platform: {\n        name: \"ReUse\",\n        description: \"Plataforma de reutilização de itens para promover sustentabilidade\",\n        features: [\n            \"Cadastro de produtos para troca\",\n            \"Sistema de mensagens entre usuários\",\n            \"Categorização de produtos\",\n            \"Sistema de autenticação\"\n        ]\n    }\n};\n\nmsg.payload = helpData;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 350,
+    "y": 200,
+    "wires": [
+      [
+        "api-response"
+      ]
+    ]
+  },
+  {
+    "id": "api-response",
+    "type": "http response",
+    "z": "chatbot-flow",
+    "name": "Resposta API",
+    "statusCode": "200",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "x": 550,
+    "y": 200,
+    "wires": []
+  }
+]

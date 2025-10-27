@@ -11,7 +11,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import SignOutButton from '@/components/SignOutButton'
-import { ArrowLeft, Upload, Image as ImageIcon } from 'lucide-react'
+import Chatbot from '@/components/Chatbot'
+import { ArrowLeft, Upload, Image as ImageIcon, MessageCircle } from 'lucide-react'
 
 const categories = [
   'Eletrônicos',
@@ -31,6 +32,7 @@ export default function NewProductPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false)
   
   const [formData, setFormData] = useState({
     title: '',
@@ -157,6 +159,14 @@ export default function NewProductPage() {
             </div>
             <nav className="flex items-center space-x-4">
               <span className="text-gray-700">Olá, {session?.user?.name}</span>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsChatbotOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Assistente
+              </Button>
               <Button variant="outline" asChild>
                 <Link href="/products">
                   <ArrowLeft className="h-4 w-4 mr-2" />
@@ -310,6 +320,12 @@ export default function NewProductPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Chatbot */}
+      <Chatbot 
+        isOpen={isChatbotOpen} 
+        onClose={() => setIsChatbotOpen(false)} 
+      />
     </div>
   )
 }

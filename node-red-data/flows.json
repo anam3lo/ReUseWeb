@@ -1,0 +1,141 @@
+[
+    {
+        "id": "welcome-message",
+        "type": "function",
+        "z": "chatbot-flow",
+        "name": "Mensagem de Boas-vindas",
+        "func": "const welcomeMsg = {\n    type: 'message',\n    content: 'Olá! Sou o assistente da ReUse. Vou te ajudar a cadastrar um produto!',\n    buttons: [\n        { text: 'Iniciar Tutorial', value: 'start_tutorial' },\n        { text: 'Ajuda Geral', value: 'general_help' }\n    ],\n    step: 'welcome',\n    timestamp: new Date().toISOString()\n};\nmsg.payload = welcomeMsg;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 350,
+        "y": 40,
+        "wires": [
+            [
+                "send-response"
+            ]
+        ]
+    },
+    {
+        "id": "user-input",
+        "type": "http in",
+        "z": "chatbot-flow",
+        "name": "Receber Input",
+        "url": "/chatbot/input",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 120,
+        "wires": [
+            [
+                "process-input"
+            ]
+        ]
+    },
+    {
+        "id": "process-input",
+        "type": "function",
+        "z": "chatbot-flow",
+        "name": "Processar Input",
+        "func": "const userInput = msg.payload;\nconst buttonValue = userInput.buttonValue || '';\nlet action = buttonValue || 'welcome';\nmsg.payload = { action: action };\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 350,
+        "y": 120,
+        "wires": [
+            [
+                "action-router"
+            ]
+        ]
+    },
+    {
+        "id": "action-router",
+        "type": "switch",
+        "z": "chatbot-flow",
+        "name": "Roteador",
+        "property": "payload.action",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "start_tutorial",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "general_help",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 550,
+        "y": 120,
+        "wires": [
+            [
+                "step-1"
+            ],
+            [
+                "help"
+            ]
+        ]
+    },
+    {
+        "id": "step-1",
+        "type": "function",
+        "z": "chatbot-flow",
+        "name": "Passo 1: Título",
+        "func": "const step1Msg = {\n    type: 'message',\n    content: 'PASSO 1: TÍTULO DO PRODUTO\\n\\nO título deve ser claro e descritivo.\\n\\nExemplos bons:\\n- iPhone 12 em ótimo estado\\n- Mesa de escritório de madeira\\n- Livros de programação React',\n    buttons: [\n        { text: 'Próximo Passo', value: 'step_2' },\n        { text: 'Voltar', value: 'welcome' }\n    ],\n    step: 'step_1',\n    timestamp: new Date().toISOString()\n};\nmsg.payload = step1Msg;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 750,
+        "y": 80,
+        "wires": [
+            [
+                "send-response"
+            ]
+        ]
+    },
+    {
+        "id": "help",
+        "type": "function",
+        "z": "chatbot-flow",
+        "name": "Ajuda Geral",
+        "func": "const helpMsg = {\n    type: 'message',\n    content: 'AJUDA GERAL - PLATAFORMA REUSE\\n\\nA ReUse conecta pessoas para trocar itens usados.\\n\\nComo funciona:\\n1. Cadastre-se\\n2. Anuncie produtos\\n3. Procure produtos\\n4. Troque com outros usuários',\n    buttons: [\n        { text: 'Voltar ao Tutorial', value: 'start_tutorial' },\n        { text: 'Finalizar', value: 'finish' }\n    ],\n    step: 'help',\n    timestamp: new Date().toISOString()\n};\nmsg.payload = helpMsg;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 750,
+        "y": 160,
+        "wires": [
+            [
+                "send-response"
+            ]
+        ]
+    },
+    {
+        "id": "send-response",
+        "type": "http response",
+        "z": "chatbot-flow",
+        "name": "Resposta",
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "x": 1050,
+        "y": 100,
+        "wires": []
+    }
+]

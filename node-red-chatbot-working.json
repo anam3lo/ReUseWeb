@@ -1,0 +1,51 @@
+[
+  {
+    "id": "user-input",
+    "type": "http in",
+    "z": "chatbot-flow",
+    "name": "Receber Input",
+    "url": "/chatbot/input",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 150,
+    "y": 120,
+    "wires": [
+      [
+        "process-input"
+      ]
+    ]
+  },
+  {
+    "id": "process-input",
+    "type": "function",
+    "z": "chatbot-flow",
+    "name": "Processar Input",
+    "func": "const userInput = msg.payload;\nconst message = userInput.message || '';\nconst buttonValue = userInput.buttonValue || '';\n\nlet response = {};\n\nif (buttonValue === 'start_tutorial') {\n    response = {\n        type: 'message',\n        content: 'PASSO 1: TÍTULO DO PRODUTO\\n\\nO título deve ser claro e descritivo.\\n\\nExemplos bons:\\n- iPhone 12 em ótimo estado\\n- Mesa de escritório de madeira\\n- Livros de programação React',\n        buttons: [\n            { text: 'Próximo Passo', value: 'step_2' },\n            { text: 'Voltar', value: 'welcome' }\n        ],\n        step: 'step_1',\n        timestamp: new Date().toISOString()\n    };\n} else if (buttonValue === 'general_help') {\n    response = {\n        type: 'message',\n        content: 'AJUDA GERAL - PLATAFORMA REUSE\\n\\nA ReUse conecta pessoas para trocar itens usados.\\n\\nComo funciona:\\n1. Cadastre-se\\n2. Anuncie produtos\\n3. Procure produtos\\n4. Troque com outros usuários',\n        buttons: [\n            { text: 'Voltar ao Tutorial', value: 'start_tutorial' },\n            { text: 'Finalizar', value: 'finish' }\n        ],\n        step: 'help',\n        timestamp: new Date().toISOString()\n    };\n} else if (buttonValue === 'step_2') {\n    response = {\n        type: 'message',\n        content: 'PASSO 2: CATEGORIA DO PRODUTO\\n\\nA categoria ajuda outros usuários a encontrar seu produto.\\n\\nCategorias disponíveis:\\n\\n- Eletrônicos\\n- Roupas\\n- Livros\\n- Móveis\\n- Casa e Jardim\\n- Esportes\\n- Brinquedos\\n- Outros',\n        buttons: [\n            { text: 'Próximo Passo', value: 'step_3' },\n            { text: 'Voltar', value: 'step_1' }\n        ],\n        step: 'step_2',\n        timestamp: new Date().toISOString()\n    };\n} else if (buttonValue === 'step_3') {\n    response = {\n        type: 'message',\n        content: 'PASSO 3: DESCRIÇÃO DO PRODUTO\\n\\nA descrição é opcional, mas altamente recomendada!\\n\\nO que incluir:\\n\\n- Estado do produto\\n- Detalhes técnicos\\n- Acessórios incluídos\\n- Motivo da troca',\n        buttons: [\n            { text: 'Próximo Passo', value: 'step_4' },\n            { text: 'Voltar', value: 'step_2' }\n        ],\n        step: 'step_3',\n        timestamp: new Date().toISOString()\n    };\n} else if (buttonValue === 'step_4') {\n    response = {\n        type: 'message',\n        content: 'PASSO 4: IMAGEM DO PRODUTO\\n\\nUma boa imagem aumenta muito as chances de troca!\\n\\nComo adicionar:\\n\\n- Upload de arquivo\\n- URL da imagem\\n\\nDicas para uma boa foto:\\n\\n- Boa iluminação\\n- Produto em destaque\\n- Múltiplos ângulos',\n        buttons: [\n            { text: 'Próximo Passo', value: 'step_5' },\n            { text: 'Voltar', value: 'step_3' }\n        ],\n        step: 'step_4',\n        timestamp: new Date().toISOString()\n    };\n} else if (buttonValue === 'step_5') {\n    response = {\n        type: 'message',\n        content: 'PARABÉNS! Você aprendeu como cadastrar um produto!\\n\\nRESUMO:\\n\\n1. Título - Claro e descritivo\\n2. Categoria - Escolha adequada\\n3. Descrição - Detalhe o estado\\n4. Imagem - Foto de qualidade\\n\\nPRÓXIMOS PASSOS:\\n\\n1. Acesse a página Anunciar Produto\\n2. Preencha os campos\\n3. Revise as informações\\n4. Clique em Anunciar Produto',\n        buttons: [\n            { text: 'Ir para cadastro', value: 'go_to_form' },\n            { text: 'Revisar tutorial', value: 'start_tutorial' },\n            { text: 'Finalizar', value: 'finish' }\n        ],\n        step: 'step_5',\n        timestamp: new Date().toISOString()\n    };\n} else {\n    response = {\n        type: 'message',\n        content: 'Olá! Sou o assistente da ReUse. Como posso ajudar?',\n        buttons: [\n            { text: 'Iniciar Tutorial', value: 'start_tutorial' },\n            { text: 'Ajuda Geral', value: 'general_help' }\n        ],\n        step: 'welcome',\n        timestamp: new Date().toISOString()\n    };\n}\n\nmsg.payload = response;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 350,
+    "y": 120,
+    "wires": [
+      [
+        "send-response"
+      ]
+    ]
+  },
+  {
+    "id": "send-response",
+    "type": "http response",
+    "z": "chatbot-flow",
+    "name": "Resposta",
+    "statusCode": "200",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "x": 550,
+    "y": 120,
+    "wires": []
+  }
+]
