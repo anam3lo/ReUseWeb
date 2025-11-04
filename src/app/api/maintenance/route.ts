@@ -86,6 +86,14 @@ export async function PUT(request: NextRequest) {
       })
     }
 
+    // ✅ Garante ao TypeScript que 'config' não é nulo aqui
+    if (!config) {
+      return NextResponse.json(
+        { error: 'Falha ao criar ou atualizar configuração' },
+        { status: 500 }
+      )
+    }
+
     // Atualizar configuração local
     updateMaintenanceConfig({
       maintenanceMode: config.maintenanceMode,
@@ -96,7 +104,7 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     console.error('Erro ao atualizar modo de manutenção:', error)
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { error: 'Erro interno do servidor ao atualizar modo de manutenção' },
       { status: 500 }
     )
   }
