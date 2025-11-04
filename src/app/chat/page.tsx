@@ -2,14 +2,12 @@
 
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import SignOutButton from '@/components/SignOutButton'
-import ChatInterface, {ConversationData} from '@/components/ChatInterface'
+import ChatInterface, { ConversationData } from '@/components/ChatInterface'
 import { ArrowLeft } from 'lucide-react'
-
-const [conversationList, setConversationList] = useState<ConversationData[]>([])
 
 export default function ChatPage() {
   const { data: session, status } = useSession()
@@ -17,32 +15,37 @@ export default function ChatPage() {
   const [conversationList, setConversationList] = useState<ConversationData[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
+  /**
+   * Função memoizada para carregar conversas
+   * (evita recriação da função e warnings no useEffect)
+   */
+  const loadConversations = useCallback(async () => {
+    try {
+      const response = await fetch('/api/chat/conversations')
+      if (response.ok) {
+        const data = await response.json()
+        setConversationList(data.conversations || [])
+      }
+    } catch (error) {
+      console.error('Erro ao carregar conversas:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
 
+  /**
+   * Efeito para checar sessão e buscar conversas
+   */
   useEffect(() => {
     if (status === 'loading') return
-    
+
     if (!session) {
       router.push('/auth/signin')
       return
     }
 
-    // Carregar conversas
-    const loadConversations = async () => {
-      try {
-        const response = await fetch('/api/chat/conversations')
-        if (response.ok) {
-          const data = await response.json()
-          setConversationList(data.conversations || [])
-        }
-      } catch (error) {
-        console.error('Erro ao carregar conversas:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
     loadConversations()
-  }, [session, status, router])
+  }, [session, status, router, loadConversations])
 
   if (status === 'loading' || isLoading) {
     return (
@@ -55,10 +58,7 @@ export default function ChatPage() {
     )
   }
 
-  if (!session) {
-    return null
-  }
-
+  if (!session) return null
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -85,7 +85,8 @@ export default function ChatPage() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Conteúdo */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Conversas</h1>
           <p className="text-gray-600 mt-2">
@@ -103,13 +104,12 @@ export default function ChatPage() {
                 </div>
                 <div className="divide-y">
                   {conversationList.map((conversation, index) => (
-                    <div 
-                      key={index} 
+                    <div
+                      key={index}
                       className="p-4 hover:bg-gray-50 cursor-pointer"
                       onClick={() => {
-                        // Passar a conversa selecionada para o ChatInterface
-                        const event = new CustomEvent('selectConversation', { 
-                          detail: conversation 
+                        const event = new CustomEvent('selectConversation', {
+                          detail: conversation,
                         })
                         window.dispatchEvent(event)
                       }}
@@ -150,7 +150,7 @@ export default function ChatPage() {
 
             {/* Interface de Chat */}
             <div className="lg:col-span-2">
-              <ChatInterface 
+              <ChatInterface
                 conversations={conversationList}
                 currentUserId={session.user.id}
               />
@@ -169,7 +169,7 @@ export default function ChatPage() {
             </Button>
           </div>
         )}
-      </div>
+      </main>
     </div>
   )
 }
