@@ -6,14 +6,17 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import SignOutButton from '@/components/SignOutButton'
-import ChatInterface from '@/components/ChatInterface'
+import ChatInterface, {ConversationData} from '@/components/ChatInterface'
 import { ArrowLeft } from 'lucide-react'
+
+const [conversationList, setConversationList] = useState<ConversationData[]>([])
 
 export default function ChatPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [conversationList, setConversationList] = useState([])
+  const [conversationList, setConversationList] = useState<ConversationData[]>([])
   const [isLoading, setIsLoading] = useState(true)
+
 
   useEffect(() => {
     if (status === 'loading') return

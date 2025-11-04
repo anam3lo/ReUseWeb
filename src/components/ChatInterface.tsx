@@ -7,51 +7,63 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Send, Phone, Video, MoreVertical } from 'lucide-react'
 import Image from 'next/image'
 
-interface Conversation {
+/**
+ * Tipagem das conversas (compatível com o page.tsx)
+ */
+export interface ConversationData {
+  id: string
+  otherUser: {
+    id: string
+    name: string
+  }
   product: {
     id: string
     title: string
     image: string | null
   }
-  otherUser: {
-    id: string
-    name: string
-  }
   lastMessage: {
     id: string
     content: string
-    timestamp: Date
-    senderId: string
+    timestamp: string
   }
   unreadCount: number
 }
 
 interface ChatInterfaceProps {
-  conversations: Conversation[]
+  conversations: ConversationData[]
   currentUserId: string
 }
 
-export default function ChatInterface({ conversations, currentUserId }: ChatInterfaceProps) {
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
+/**
+ * Componente principal do Chat
+ */
+export default function ChatInterface({
+  conversations,
+  currentUserId,
+}: ChatInterfaceProps): JSX.Element {
+  const [selectedConversation, setSelectedConversation] = useState<ConversationData | null>(null)
   const [messages, setMessages] = useState<any[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Escutar evento de seleção de conversa
+  /**
+   * Escuta o evento de seleção de conversa (vindo do page.tsx)
+   */
   useEffect(() => {
     const handleSelectConversation = (event: CustomEvent) => {
       setSelectedConversation(event.detail)
     }
 
     window.addEventListener('selectConversation', handleSelectConversation as EventListener)
-    
     return () => {
       window.removeEventListener('selectConversation', handleSelectConversation as EventListener)
     }
   }, [])
 
-  // Carregar mensagens reais quando uma conversa é selecionada
+  /**
+   * Carrega as mensagens da conversa selecionada
+   */
   useEffect(() => {
     const loadMessages = async () => {
       if (selectedConversation) {
@@ -73,23 +85,26 @@ export default function ChatInterface({ conversations, currentUserId }: ChatInte
     loadMessages()
   }, [selectedConversation, currentUserId])
 
-  // Auto scroll para a última mensagem
+  /**
+   * Scroll automático para a última mensagem
+   */
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  /**
+   * Envio de mensagem
+   */
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newMessage.trim() || !selectedConversation) return
 
     setIsLoading(true)
-    
+
     try {
       const response = await fetch('/api/messages', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content: newMessage.trim(),
           receiverId: selectedConversation.otherUser.id,
@@ -99,8 +114,7 @@ export default function ChatInterface({ conversations, currentUserId }: ChatInte
 
       if (response.ok) {
         const data = await response.json()
-        // Adicionar a nova mensagem à lista
-        setMessages(prev => [...prev, data.data])
+        setMessages((prev) => [...prev, data.data])
         setNewMessage('')
       } else {
         console.error('Erro ao enviar mensagem')
@@ -112,13 +126,17 @@ export default function ChatInterface({ conversations, currentUserId }: ChatInte
     }
   }
 
-  const formatTime = (date: Date) => {
-    return new Date(date).toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+  /**
+   * Formata a hora das mensagens
+   */
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp)
+    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
   }
 
+  /**
+   * Caso nenhuma conversa esteja selecionada
+   */
   if (!selectedConversation) {
     return (
       <Card className="h-96">
@@ -132,17 +150,24 @@ export default function ChatInterface({ conversations, currentUserId }: ChatInte
     )
   }
 
+  /**
+   * Renderização principal da conversa
+   */
   return (
     <Card className="h-96 flex flex-col">
       {/* Header da Conversa */}
       <CardHeader className="pb-4 border-b">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-              <span className="text-green-600 font-semibold">
-                {selectedConversation.otherUser.name.charAt(0)}
-              </span>
-            </div>
+            {selectedConversation.product.image && (
+              <Image
+                src={selectedConversation.product.image}
+                alt={selectedConversation.product.title}
+                width={40}
+                height={40}
+                className="rounded-full object-cover"
+              />
+            )}
             <div>
               <CardTitle className="text-lg">{selectedConversation.otherUser.name}</CardTitle>
               <p className="text-sm text-gray-500">{selectedConversation.product.title}</p>
@@ -162,26 +187,23 @@ export default function ChatInterface({ conversations, currentUserId }: ChatInte
         </div>
       </CardHeader>
 
-      {/* Área de Mensagens */}
+      {/* Mensagens */}
       <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => {
           const isOwn = message.senderId === currentUserId
           return (
-            <div
-              key={message.id}
-              className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-            >
+            <div key={message.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
               <div
                 className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                  isOwn
-                    ? 'bg-green-500 text-white'
-                    : 'bg-gray-200 text-gray-900'
+                  isOwn ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-900'
                 }`}
               >
                 <p className="text-sm">{message.content}</p>
-                <p className={`text-xs mt-1 ${
-                  isOwn ? 'text-green-100' : 'text-gray-500'
-                }`}>
+                <p
+                  className={`text-xs mt-1 ${
+                    isOwn ? 'text-green-100' : 'text-gray-500'
+                  }`}
+                >
                   {formatTime(message.timestamp)}
                 </p>
               </div>
@@ -191,7 +213,7 @@ export default function ChatInterface({ conversations, currentUserId }: ChatInte
         <div ref={messagesEndRef} />
       </CardContent>
 
-      {/* Campo de Envio */}
+      {/* Campo de envio */}
       <div className="p-4 border-t">
         <form onSubmit={handleSendMessage} className="flex space-x-2">
           <Input
