@@ -86,7 +86,7 @@ export async function PUT(request: NextRequest) {
       })
     }
 
-    // ✅ Garante ao TypeScript que 'config' não é nulo aqui
+    
     if (!config) {
       return NextResponse.json(
         { error: 'Falha ao criar ou atualizar configuração' },
