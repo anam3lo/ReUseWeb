@@ -58,8 +58,13 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Atualizar configuração local
-    setMaintenanceStatus(config.maintenanceMode, config.maintenanceMessage)
+    // Atualizar configuração local (somente se config existir)
+    if (config) {
+      setMaintenanceStatus(
+        config.maintenanceMode, 
+        config.maintenanceMessage ?? ''
+      )
+    }
 
     // Log da ação para auditoria
     console.log(`Modo de manutenção ${maintenanceMode ? 'ATIVADO' : 'DESATIVADO'} via API externa`)
