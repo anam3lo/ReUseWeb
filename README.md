@@ -45,7 +45,7 @@ npm install
 copy env.example .env
 ```
 
-**Importante**: O arquivo `.env` já está configurado com um banco de dados de exemplo. Se quiser usar seu próprio banco, edite as variáveis no arquivo `.env`.
+**Importante**: abra o `.env` e preencha a `DATABASE_URL` com o endereço do seu banco PostgreSQL (no Neon: painel do projeto > Connect) e troque o `NEXTAUTH_SECRET` por um texto longo e aleatório. O `.env` não vai para o GitHub; nunca coloque senhas reais no `env.example`.
 
 ### Passo 4: Configurar o Banco de Dados
 
