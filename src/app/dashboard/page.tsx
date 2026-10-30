@@ -3,9 +3,13 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { ChevronRight, Inbox, MessageCircle, PackageOpen, Plus, RefreshCw, Tag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import SignOutButton from '@/components/SignOutButton'
+import { Avatar } from '@/components/ui/avatar'
+import Header from '@/components/Header'
+import ProductImage from '@/components/ProductImage'
+import Reveal from '@/components/Reveal'
+import { formatRelativeDate, getFirstName } from '@/lib/format'
 
 export default async function Dashboard() {
   const session = await getServerSession(authOptions)
@@ -48,136 +52,197 @@ export default async function Dashboard() {
     take: 5
   })
 
+  const stats = [
+    { label: 'Produtos Anunciados', value: userProducts.length, icon: Tag, highlight: true },
+    { label: 'Mensagens Recebidas', value: recentMessages.length, icon: MessageCircle, highlight: false },
+    { label: 'Produtos Vendidos', value: 0, icon: RefreshCw, highlight: false },
+  ]
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center">
-              <Link href="/" className="text-2xl font-bold text-green-600 hover:text-green-700">
-                ReUse
-              </Link>
-            </div>
-            <nav className="flex items-center space-x-4">
-              <span className="text-gray-700">Olá, {session.user?.name}</span>
-              <Button asChild>
-                <Link href="/products/new">Anunciar Produto</Link>
-              </Button>
-              <SignOutButton />
-            </nav>
+    <div className="min-h-screen bg-background">
+      <Header />
+
+      <main className="container py-8 sm:py-12">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <div className="space-y-1.5">
+            <p className="animate-fade-up text-[15px] text-muted-foreground">Olá, {getFirstName(session.user?.name)}</p>
+            <h1 className="animate-fade-up text-4xl font-bold tracking-[-0.035em] sm:text-5xl" style={{ animationDelay: '60ms' }}>
+              Dashboard
+            </h1>
+            <p className="animate-fade-up text-muted-foreground" style={{ animationDelay: '100ms' }}>
+              Gerencie seus produtos e mensagens
+            </p>
           </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600">Gerencie seus produtos e mensagens</p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Meus Produtos */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Meus Produtos</CardTitle>
-              <CardDescription>
-                Seus produtos anunciados na plataforma
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {userProducts.length > 0 ? (
-                <div className="space-y-4">
-                  {userProducts.map((product) => (
-                    <div key={product.id} className="border rounded-lg p-4">
-                      <h3 className="font-semibold">{product.title}</h3>
-                      <p className="text-sm text-gray-600">{product.category}</p>
-                      <p className="text-sm text-gray-500">
-                        {new Date(product.createdAt).toLocaleDateString('pt-BR')}
-                      </p>
-                    </div>
-                  ))}
-                  <Button asChild className="w-full">
-                    <Link href="/products">Ver Todos os Produtos</Link>
-                  </Button>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500 mb-4">Você ainda não anunciou nenhum produto</p>
-                  <Button asChild>
-                    <Link href="/products/new">Anunciar Primeiro Produto</Link>
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Mensagens Recentes */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Mensagens Recentes</CardTitle>
-              <CardDescription>
-                Últimas mensagens recebidas sobre seus produtos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {recentMessages.length > 0 ? (
-                <div className="space-y-4">
-                  {recentMessages.map((message) => (
-                    <div key={message.id} className="border rounded-lg p-4">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-semibold">{message.sender.name}</p>
-                          <p className="text-sm text-gray-600">{message.product.title}</p>
-                          <p className="text-sm text-gray-500 mt-1">{message.content}</p>
-                        </div>
-                        <span className="text-xs text-gray-400">
-                          {new Date(message.timestamp).toLocaleDateString('pt-BR')}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                  <Button asChild className="w-full">
-                    <Link href="/chat">Ver Todas as Mensagens</Link>
-                  </Button>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">Nenhuma mensagem recebida ainda</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <Button asChild>
+            <Link href="/products/new">
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Anunciar Produto
+            </Link>
+          </Button>
         </div>
 
         {/* Estatísticas Rápidas */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-green-600">{userProducts.length}</div>
-                <div className="text-sm text-gray-600">Produtos Anunciados</div>
+        <div className="mb-6 grid gap-3 sm:grid-cols-3 sm:gap-4">
+          {stats.map((stat, index) => (
+            <Reveal key={stat.label} delay={index * 80}>
+              <div
+                className={
+                  stat.highlight
+                    ? 'flex h-full flex-col gap-5 rounded-3xl bg-primary p-6 text-white'
+                    : 'flex h-full flex-col gap-5 rounded-3xl border bg-card p-6'
+                }
+              >
+                <div className="flex items-center justify-between">
+                  <span className={stat.highlight ? 'text-sm text-white/75' : 'text-sm text-muted-foreground'}>
+                    {stat.label}
+                  </span>
+                  <span
+                    className={
+                      stat.highlight
+                        ? 'flex h-10 w-10 items-center justify-center rounded-xl bg-accent/20'
+                        : 'flex h-10 w-10 items-center justify-center rounded-xl bg-mint'
+                    }
+                  >
+                    <stat.icon className={stat.highlight ? 'h-5 w-5 text-accent' : 'h-5 w-5 text-primary'} aria-hidden="true" />
+                  </span>
+                </div>
+                <span className="font-display text-5xl font-bold leading-none">{stat.value}</span>
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600">{recentMessages.length}</div>
-                <div className="text-sm text-gray-600">Mensagens Recebidas</div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-purple-600">0</div>
-                <div className="text-sm text-gray-600">Produtos Vendidos</div>
-              </div>
-            </CardContent>
-          </Card>
+            </Reveal>
+          ))}
         </div>
+
+        <div className="grid items-start gap-4 lg:grid-cols-2 lg:gap-5">
+          {/* Meus Produtos */}
+          <Reveal>
+            <section className="rounded-4xl border bg-card p-2" aria-labelledby="my-products">
+              <PanelHeader
+                id="my-products"
+                title="Meus Produtos"
+                description="Seus produtos anunciados na plataforma"
+                href="/products"
+                linkLabel="Ver todos"
+              />
+              {userProducts.length > 0 ? (
+                <ul>
+                  {userProducts.map((product) => (
+                    <li key={product.id}>
+                      <Link
+                        href={`/products/${product.id}`}
+                        className="group flex items-center gap-4 rounded-2xl p-3 transition-colors duration-200 hover:bg-background"
+                      >
+                        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl">
+                          <ProductImage src={product.image} alt={product.title} category={product.category} iconSize="sm" sizes="56px" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-semibold">{product.title}</p>
+                          <p className="text-[13px] text-muted-foreground">
+                            {product.category} · {new Date(product.createdAt).toLocaleDateString('pt-BR')}
+                          </p>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <EmptyPanel icon={PackageOpen} text="Você ainda não anunciou nenhum produto">
+                  <Button asChild>
+                    <Link href="/products/new">Anunciar Primeiro Produto</Link>
+                  </Button>
+                </EmptyPanel>
+              )}
+            </section>
+          </Reveal>
+
+          {/* Mensagens Recentes */}
+          <Reveal delay={80}>
+            <section className="rounded-4xl border bg-card p-2" aria-labelledby="recent-messages">
+              <PanelHeader
+                id="recent-messages"
+                title="Mensagens Recentes"
+                description="Últimas mensagens recebidas sobre seus produtos"
+                href="/chat"
+                linkLabel="Ver todas"
+              />
+              {recentMessages.length > 0 ? (
+                <ul>
+                  {recentMessages.map((message) => (
+                    <li key={message.id}>
+                      <Link
+                        href="/chat"
+                        className="flex items-start gap-3 rounded-2xl p-3 transition-colors duration-200 hover:bg-background"
+                      >
+                        <Avatar name={message.sender.name} />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="truncate font-semibold">{message.sender.name}</p>
+                            <span className="shrink-0 text-xs text-muted-foreground">
+                              {formatRelativeDate(message.timestamp)}
+                            </span>
+                          </div>
+                          <p className="truncate text-[13px] font-medium text-primary">{message.product.title}</p>
+                          <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">{message.content}</p>
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <EmptyPanel icon={Inbox} text="Nenhuma mensagem recebida ainda" />
+              )}
+            </section>
+          </Reveal>
+        </div>
+      </main>
+    </div>
+  )
+}
+
+function PanelHeader({
+  id,
+  title,
+  description,
+  href,
+  linkLabel,
+}: {
+  id: string
+  title: string
+  description: string
+  href: string
+  linkLabel: string
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4 px-4 pb-3 pt-4">
+      <div className="space-y-1">
+        <h2 id={id} className="text-[22px] font-semibold">
+          {title}
+        </h2>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
+      <Link href={href} className="shrink-0 pt-1 text-sm font-semibold text-primary hover:text-primary-hover">
+        {linkLabel}
+      </Link>
+    </div>
+  )
+}
+
+function EmptyPanel({
+  icon: Icon,
+  text,
+  children,
+}: {
+  icon: typeof Inbox
+  text: string
+  children?: React.ReactNode
+}) {
+  return (
+    <div className="flex flex-col items-center gap-4 px-6 pb-10 pt-6 text-center">
+      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-mint">
+        <Icon className="h-7 w-7 text-primary" aria-hidden="true" />
+      </span>
+      <p className="text-muted-foreground">{text}</p>
+      {children}
     </div>
   )
 }

@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Search, Filter, X } from 'lucide-react'
+import { Spinner } from '@/components/ui/spinner'
+import { Search, X } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface SearchAndFiltersProps {
   categories: string[]
@@ -13,36 +14,43 @@ interface SearchAndFiltersProps {
   currentCategory: string
 }
 
-export default function SearchAndFilters({ 
-  categories, 
-  currentSearch, 
-  currentCategory 
+export default function SearchAndFilters({
+  categories,
+  currentSearch,
+  currentCategory
 }: SearchAndFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [search, setSearch] = useState(currentSearch)
+  const [isPending, startTransition] = useTransition()
+
+  const navigate = (url: string) => {
+    startTransition(() => {
+      router.push(url)
+    })
+  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     const params = new URLSearchParams(searchParams)
-    
+
     if (search.trim()) {
       params.set('search', search.trim())
     } else {
       params.delete('search')
     }
-    
+
     // Manter a categoria atual
     if (currentCategory) {
       params.set('category', currentCategory)
     }
-    
-    router.push(`/products?${params.toString()}`)
+
+    navigate(`/products?${params.toString()}`)
   }
 
   const handleCategoryFilter = (category: string) => {
     const params = new URLSearchParams(searchParams)
-    
+
     if (category === currentCategory) {
       // Se clicou na categoria atual, remove o filtro
       params.delete('category')
@@ -50,92 +58,119 @@ export default function SearchAndFilters({
       // Senão, aplica a nova categoria
       params.set('category', category)
     }
-    
+
     // Manter a busca atual
     if (currentSearch) {
       params.set('search', currentSearch)
     }
-    
-    router.push(`/products?${params.toString()}`)
+
+    navigate(`/products?${params.toString()}`)
   }
 
   const clearFilters = () => {
-    router.push('/products')
+    setSearch('')
+    navigate('/products')
   }
 
   const hasActiveFilters = currentSearch || currentCategory
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 rounded-3xl border bg-card p-3 sm:p-5">
       {/* Barra de Pesquisa */}
-      <form onSubmit={handleSearch} className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+      <form onSubmit={handleSearch} role="search" className="flex flex-wrap gap-2">
+        <div className="relative min-w-0 flex-1 basis-60">
+          <Search
+            className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <label htmlFor="product-search" className="sr-only">
+            Buscar produtos
+          </label>
           <Input
-            type="text"
+            id="product-search"
+            type="search"
             placeholder="Buscar produtos..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
+            className="h-[52px] rounded-2xl bg-background pl-12"
           />
         </div>
-        <Button type="submit" className="px-6">
+        <Button type="submit" size="lg" className="h-[52px] flex-1 rounded-2xl sm:flex-none" disabled={isPending}>
+          {isPending ? <Spinner label="Buscando" /> : <Search className="h-4 w-4" aria-hidden="true" />}
           Buscar
         </Button>
         {hasActiveFilters && (
-          <Button 
-            type="button" 
-            variant="outline" 
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
             onClick={clearFilters}
-            className="px-4"
+            className="h-[52px] animate-fade-in rounded-2xl"
           >
-            <X className="h-4 w-4 mr-2" />
+            <X className="h-4 w-4" aria-hidden="true" />
             Limpar
           </Button>
         )}
       </form>
 
       {/* Filtros por Categoria */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Filter className="h-4 w-4" />
-          <span>Categorias:</span>
-        </div>
-        
-        <div className="flex flex-wrap gap-2">
-          <Badge
-            variant={currentCategory === '' ? "default" : "outline"}
-            className="cursor-pointer hover:bg-gray-100"
-            onClick={() => handleCategoryFilter('')}
+      <div
+        role="group"
+        aria-label="Filtrar por categoria"
+        className="scrollbar-none -mx-3 flex gap-2 overflow-x-auto px-3 sm:mx-0 sm:flex-wrap sm:px-0"
+      >
+        <CategoryChip active={currentCategory === ''} onClick={() => handleCategoryFilter('')}>
+          Todas
+        </CategoryChip>
+        {categories.map((category) => (
+          <CategoryChip
+            key={category}
+            active={currentCategory === category}
+            onClick={() => handleCategoryFilter(category)}
           >
-            Todas
-          </Badge>
-          
-          {categories.map((category) => (
-            <Badge
-              key={category}
-              variant={currentCategory === category ? "default" : "outline"}
-              className="cursor-pointer hover:bg-gray-100"
-              onClick={() => handleCategoryFilter(category)}
-            >
-              {category}
-            </Badge>
-          ))}
-        </div>
+            {category}
+          </CategoryChip>
+        ))}
       </div>
 
       {/* Resultados */}
       {hasActiveFilters && (
-        <div className="text-sm text-gray-600">
+        <p className="animate-fade-in px-1 text-sm text-muted-foreground" aria-live="polite">
           {currentSearch && (
-            <span>Buscando por: <strong>"{currentSearch}"</strong></span>
+            <span>Buscando por: <strong className="text-foreground">"{currentSearch}"</strong></span>
           )}
           {currentSearch && currentCategory && <span> • </span>}
           {currentCategory && (
-            <span>Categoria: <strong>{currentCategory}</strong></span>
+            <span>Categoria: <strong className="text-foreground">{currentCategory}</strong></span>
           )}
-        </div>
+        </p>
       )}
     </div>
+  )
+}
+
+function CategoryChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        'h-10 shrink-0 rounded-full border px-4 text-sm transition-[background-color,border-color,color,transform] duration-200 ease-smooth active:scale-95',
+        active
+          ? 'border-foreground bg-foreground font-semibold text-background'
+          : 'border-border bg-card font-medium text-foreground/80 hover:border-primary hover:text-foreground'
+      )}
+    >
+      {children}
+    </button>
   )
 }

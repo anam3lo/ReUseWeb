@@ -101,11 +101,22 @@ Abra seu navegador e acesse: **http://localhost:3000**
 - Clique em um produto para iniciar uma conversa
 - Envie mensagens para o dono do produto
 
-### 6. **Acessar o Dashboard**
+### 6. **Acessar o Dashboard e o Perfil**
 - Clique em "Dashboard" para ver:
   - Seus produtos anunciados
   - Mensagens recebidas
   - Estatísticas da sua conta
+- Pelo menu da conta (avatar no topo), acesse "Meu perfil" em `/profile`
+
+## 🎨 Identidade visual
+
+A interface usa um sistema visual próprio, construído só com Tailwind CSS (sem bibliotecas novas):
+
+- **Cores** (tokens em `src/app/globals.css`): Floresta `#1D5C46` (primária), Broto `#C9EE5B` (destaque), Tinta `#13221C` (texto), Papel `#F7F6F1` (fundo) e Menta `#E6F0EA` (suave).
+- **Tipografia:** Bricolage Grotesque nos títulos e Inter no texto.
+- **Componentes:** `src/components/ui` (botão, card, campos, badge, avatar, skeleton, spinner) e componentes de página como `Header`, `MobileTabBar`, `ProductCard`, `SiteFooter` e `AuthLayout`.
+- **Animações:** keyframes em `tailwind.config.js`, entrada por rolagem com `<Reveal />`, transição entre páginas em `src/app/template.tsx` e skeletons nos `loading.tsx`. Tudo é desligado quando o sistema pede `prefers-reduced-motion`.
+- **Responsivo:** no celular, a navegação vira uma barra inferior fixa e as telas (catálogo, chat, formulários) se reorganizam para toque.
 
 ## 🛠️ Comandos Disponíveis
 

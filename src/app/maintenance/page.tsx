@@ -45,50 +45,51 @@ export default function MaintenancePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-indigo-600" />
-          <p className="text-gray-600">Verificando status do sistema...</p>
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="animate-fade-in text-center">
+          <RefreshCw className="mx-auto mb-4 h-8 w-8 animate-spin text-primary" aria-hidden="true" />
+          <p className="text-muted-foreground">Verificando status do sistema...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
-      <div className="max-w-2xl w-full">
-        <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-12">
+      <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-accent/40 blur-3xl" aria-hidden="true" />
+      <div className="absolute -bottom-40 -left-32 h-96 w-96 rounded-full bg-primary/15 blur-3xl" aria-hidden="true" />
+
+      <div className="relative w-full max-w-xl animate-fade-up">
+        <div className="rounded-4xl border bg-card p-8 text-center shadow-lift sm:p-10">
           {/* Ícone de manutenção */}
           <div className="mb-8">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-orange-100 rounded-full mb-4">
-              <Wrench className="h-10 w-10 text-orange-600" />
+            <div className="mb-5 inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-primary">
+              <Wrench className="h-9 w-9 text-accent" aria-hidden="true" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="mb-2 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
               Sistema em Manutenção
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Estamos trabalhando para melhorar sua experiência
             </p>
           </div>
 
           {/* Mensagem personalizada */}
-          <div className="mb-8">
-            <div className="bg-gray-50 rounded-lg p-6">
-              <p className="text-lg text-gray-700 leading-relaxed">
-                {config?.maintenanceMessage || 'Sistema em manutenção. Voltaremos em breve!'}
-              </p>
-            </div>
+          <div className="mb-8 rounded-2xl bg-background p-6">
+            <p className="text-lg leading-relaxed text-foreground/85">
+              {config?.maintenanceMessage || 'Sistema em manutenção. Voltaremos em breve!'}
+            </p>
           </div>
 
           {/* Informações adicionais */}
-          <div className="space-y-4 mb-8">
-            <div className="flex items-center justify-center space-x-2 text-gray-600">
-              <Clock className="h-5 w-5" />
+          <div className="mb-8 space-y-3">
+            <div className="flex items-center justify-center gap-2 text-muted-foreground">
+              <Clock className="h-5 w-5" aria-hidden="true" />
               <span>Voltaremos em breve</span>
             </div>
             
             {config?.lastUpdated && (
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 Última atualização: {new Date(config.lastUpdated).toLocaleString('pt-BR')}
               </p>
             )}
@@ -99,24 +100,22 @@ export default function MaintenancePage() {
             <button
               onClick={handleRefresh}
               disabled={isLoading}
-              className="inline-flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+              className="inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 font-semibold text-primary-foreground transition-[background-color,transform] duration-200 hover:bg-primary-hover active:scale-[0.97] disabled:opacity-60"
             >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
               <span>Verificar Novamente</span>
             </button>
             
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               Esta página será atualizada automaticamente quando o sistema voltar ao normal
             </p>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-8">
-          <p className="text-gray-500 text-sm">
-            ReUseWeb - Plataforma de Reutilização Sustentável
-          </p>
-        </div>
+        <p className="mt-8 text-center text-sm text-muted-foreground">
+          ReUse · Plataforma de Reutilização Sustentável
+        </p>
       </div>
     </div>
   )

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { MessageCircle, Bot, User, X } from 'lucide-react'
+import { Bot, X } from 'lucide-react'
 
 interface ChatMessage {
   type: string
@@ -101,7 +101,7 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/\n/g, '<br>')
-      .replace(/✅/g, '<span class="text-green-600">✅</span>')
+      .replace(/✅/g, '<span class="text-primary">✅</span>')
       .replace(/❌/g, '<span class="text-red-600">❌</span>')
       .replace(/📝/g, '<span class="text-blue-600">📝</span>')
       .replace(/🏷️/g, '<span class="text-purple-600">🏷️</span>')
@@ -121,56 +121,71 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-2xl h-[80vh] max-h-[700px] flex flex-col">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 flex-shrink-0">
-          <CardTitle className="flex items-center gap-2">
-            <Bot className="h-5 w-5 text-green-600" />
-            Assistente ReUse
+    <div
+      className="fixed inset-0 z-50 flex animate-fade-in items-end justify-center bg-foreground/40 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose()
+      }}
+    >
+      <Card
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="chatbot-title"
+        className="flex h-[88vh] max-h-[720px] w-full max-w-2xl animate-slide-up flex-col overflow-hidden rounded-b-none shadow-float sm:h-[80vh] sm:animate-scale-in sm:rounded-b-3xl"
+      >
+        <CardHeader className="flex flex-shrink-0 flex-row items-center justify-between gap-3 space-y-0 border-b px-5 py-4">
+          <CardTitle id="chatbot-title" className="flex items-center gap-3 text-lg">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary">
+              <Bot className="h-5 w-5 text-accent" aria-hidden="true" />
+            </span>
+            <span className="flex flex-col">
+              Assistente ReUse
+              <span className="font-sans text-xs font-normal text-muted-foreground">Ajuda para cadastrar produtos</span>
+            </span>
           </CardTitle>
           <Button
             variant="ghost"
-            size="sm"
+            size="icon-sm"
             onClick={onClose}
-            className="h-8 w-8 p-0"
+            aria-label="Fechar assistente"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </Button>
         </CardHeader>
         
-        <CardContent className="flex-1 flex flex-col p-0 min-h-0">
+        <CardContent className="flex min-h-0 flex-1 flex-col bg-surface p-0">
           {/* Área de mensagens */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 sm:p-5" aria-live="polite">
             {messages.map((message, index) => (
-              <div key={index} className="space-y-2">
+              <div key={index} className="animate-message-in space-y-2">
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0">
                     {message.type === 'error' ? (
-                      <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                        <X className="h-4 w-4 text-red-600" />
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-destructive/10">
+                        <X className="h-4 w-4 text-destructive" aria-hidden="true" />
                       </div>
                     ) : (
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                        <Bot className="h-4 w-4 text-green-600" />
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-mint">
+                        <Bot className="h-4 w-4 text-primary" aria-hidden="true" />
                       </div>
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div 
-                      className="bg-gray-50 rounded-lg p-3 text-sm whitespace-pre-wrap break-words"
+                      className="whitespace-pre-wrap break-words rounded-2xl rounded-tl-md border bg-card p-3.5 text-sm leading-relaxed"
                       dangerouslySetInnerHTML={{ 
                         __html: formatMessage(message.content) 
                       }}
                     />
                     {message.buttons && message.buttons.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-2">
+                      <div className="mt-2.5 flex flex-wrap gap-2">
                         {message.buttons.map((button, btnIndex) => (
                           <Button
                             key={btnIndex}
                             variant="outline"
                             size="sm"
                             onClick={() => handleButtonClick(button.value)}
-                            className="text-xs whitespace-nowrap"
+                            className="whitespace-nowrap hover:border-primary hover:bg-mint"
                           >
                             {button.text}
                           </Button>
@@ -183,15 +198,12 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
             ))}
             
             {isLoading && (
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <Bot className="h-4 w-4 text-green-600" />
+              <div className="flex animate-message-in items-start gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-mint">
+                  <Bot className="h-4 w-4 text-primary" aria-hidden="true" />
                 </div>
-                <div className="bg-gray-50 rounded-lg p-3 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
-                    Pensando...
-                  </div>
+                <div className="rounded-2xl rounded-tl-md border bg-card px-4 py-3.5 text-sm" role="status" aria-label="Pensando">
+                  <TypingDots />
                 </div>
               </div>
             )}
@@ -201,5 +213,19 @@ export default function Chatbot({ isOpen, onClose }: ChatbotProps) {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+function TypingDots() {
+  return (
+    <span className="flex items-center gap-1" aria-hidden="true">
+      {[0, 150, 300].map((delay) => (
+        <span
+          key={delay}
+          className="h-2 w-2 animate-bounce rounded-full bg-primary/60"
+          style={{ animationDelay: `${delay}ms` }}
+        />
+      ))}
+    </span>
   )
 }

@@ -4,16 +4,21 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
+import { MessagesSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import SignOutButton from '@/components/SignOutButton'
+import { Avatar } from '@/components/ui/avatar'
+import { Skeleton } from '@/components/ui/skeleton'
+import Header from '@/components/Header'
 import ChatInterface, { ConversationData } from '@/components/ChatInterface'
-import { ArrowLeft } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { formatRelativeDate } from '@/lib/format'
 
 export default function ChatPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [conversationList, setConversationList] = useState<ConversationData[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedKey, setSelectedKey] = useState<string | null>(null)
 
   /**
    * Função memoizada para carregar conversas
@@ -47,121 +52,140 @@ export default function ChatPage() {
     loadConversations()
   }, [session, status, router, loadConversations])
 
+  const conversationKey = (conversation: ConversationData, index: number) =>
+    conversation.id ?? `${conversation.product.id}-${conversation.otherUser.id}-${index}`
+
+  const selectConversation = (conversation: ConversationData | null, key: string | null) => {
+    setSelectedKey(key)
+    const event = new CustomEvent('selectConversation', {
+      detail: conversation,
+    })
+    window.dispatchEvent(event)
+  }
+
   if (status === 'loading' || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p>Carregando conversas...</p>
-        </div>
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container py-8" aria-busy="true" aria-label="Carregando conversas">
+          <Skeleton className="mb-2 h-11 w-56" />
+          <Skeleton className="mb-8 h-5 w-80 max-w-full" />
+          <div className="grid h-[560px] gap-0 overflow-hidden rounded-4xl border bg-card lg:grid-cols-[340px_1fr]">
+            <div className="space-y-2 border-r p-3">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-3 p-2">
+                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-3 w-3/4" />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="hidden bg-surface lg:block" />
+          </div>
+        </main>
       </div>
     )
   }
 
   if (!session) return null
 
+  const hasSelection = selectedKey !== null
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center">
-              <Link href="/products" className="text-2xl font-bold text-green-600 hover:text-green-700">
-                ReUse
-              </Link>
-            </div>
-            <nav className="flex items-center space-x-4">
-              <span className="text-gray-700">Olá, {session.user?.name}</span>
-              <Button variant="outline" asChild>
-                <Link href="/products">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Voltar aos Produtos
-                </Link>
-              </Button>
-              <SignOutButton />
-            </nav>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-background">
+      <Header />
 
       {/* Conteúdo */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Conversas</h1>
-          <p className="text-gray-600 mt-2">
+      <main className="container py-6 sm:py-8">
+        <div className={cn('mb-6 space-y-1.5', hasSelection && 'max-lg:hidden')}>
+          <h1 className="animate-fade-up text-4xl font-bold tracking-[-0.035em] sm:text-5xl">Conversas</h1>
+          <p className="animate-fade-up text-muted-foreground" style={{ animationDelay: '60ms' }}>
             Negocie trocas e converse com outros usuários
           </p>
         </div>
 
         {conversationList.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div
+            className={cn(
+              'grid animate-fade-up overflow-hidden rounded-4xl border bg-card lg:grid-cols-[340px_1fr]',
+              'h-[calc(100dvh-200px)] min-h-[480px] lg:h-[calc(100vh-240px)] lg:max-h-[760px]',
+              hasSelection && 'max-lg:h-[calc(100dvh-180px)]'
+            )}
+            style={{ animationDelay: '120ms' }}
+          >
             {/* Lista de Conversas */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-sm border">
-                <div className="p-4 border-b">
-                  <h2 className="text-lg font-semibold">Conversas Ativas</h2>
-                </div>
-                <div className="divide-y">
-                  {conversationList.map((conversation, index) => (
-                    <div
-                      key={index}
-                      className="p-4 hover:bg-gray-50 cursor-pointer"
-                      onClick={() => {
-                        const event = new CustomEvent('selectConversation', {
-                          detail: conversation,
-                        })
-                        window.dispatchEvent(event)
-                      }}
-                    >
-                      <div className="flex items-start space-x-3">
-                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                          <span className="text-green-600 font-semibold">
-                            {conversation.otherUser.name.charAt(0)}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-medium text-gray-900 truncate">
+            <aside className={cn('flex min-h-0 flex-col border-r', hasSelection && 'max-lg:hidden')}>
+              <div className="border-b px-5 py-4">
+                <h2 className="text-lg font-semibold">Conversas Ativas</h2>
+                <p className="text-[13px] text-muted-foreground">
+                  {conversationList.length} {conversationList.length === 1 ? 'conversa' : 'conversas'}
+                </p>
+              </div>
+              <ul className="min-h-0 flex-1 overflow-y-auto p-2">
+                {conversationList.map((conversation, index) => {
+                  const key = conversationKey(conversation, index)
+                  const active = key === selectedKey
+                  return (
+                    <li key={key}>
+                      <button
+                        type="button"
+                        aria-current={active ? 'true' : undefined}
+                        onClick={() => selectConversation(conversation, key)}
+                        className={cn(
+                          'relative flex w-full items-start gap-3 rounded-2xl p-3 text-left transition-colors duration-200',
+                          active ? 'bg-mint' : 'hover:bg-background'
+                        )}
+                      >
+                        {active && <span className="absolute inset-y-3 left-0 w-1 rounded-full bg-primary" aria-hidden="true" />}
+                        <Avatar name={conversation.otherUser.name} size="lg" tone={active ? 'primary' : 'accent'} />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <h3 className="truncate font-sans text-[15px] font-semibold">
                               {conversation.otherUser.name}
                             </h3>
-                            <span className="text-xs text-gray-500">
-                              {new Date(conversation.lastMessage.timestamp).toLocaleDateString('pt-BR')}
+                            <span className="shrink-0 text-xs text-muted-foreground">
+                              {formatRelativeDate(conversation.lastMessage.timestamp)}
                             </span>
                           </div>
-                          <p className="text-sm text-gray-600 truncate">
+                          <p className="truncate text-[13px] font-medium text-primary">
                             {conversation.product.title}
                           </p>
-                          <p className="text-xs text-gray-500 truncate">
-                            {conversation.lastMessage.content}
-                          </p>
-                          {conversation.unreadCount > 0 && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              {conversation.unreadCount}
-                            </span>
-                          )}
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="truncate text-[13px] text-muted-foreground">
+                              {conversation.lastMessage.content}
+                            </p>
+                            {conversation.unreadCount > 0 && (
+                              <span className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-bold text-primary-foreground">
+                                {conversation.unreadCount}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </aside>
 
             {/* Interface de Chat */}
-            <div className="lg:col-span-2">
+            <div className={cn('min-h-0', !hasSelection && 'max-lg:hidden')}>
               <ChatInterface
                 conversations={conversationList}
                 currentUserId={session.user.id}
+                onBack={() => selectConversation(null, null)}
               />
             </div>
           </div>
         ) : (
-          <div className="text-center py-12">
-            <div className="text-gray-500 text-lg mb-4">
-              Nenhuma conversa iniciada ainda
-            </div>
-            <p className="text-gray-400 mb-6">
+          <div className="flex animate-fade-up flex-col items-center gap-4 rounded-4xl border border-dashed bg-card px-6 py-16 text-center">
+            <span className="flex h-16 w-16 items-center justify-center rounded-3xl bg-mint">
+              <MessagesSquare className="h-8 w-8 text-primary" aria-hidden="true" />
+            </span>
+            <p className="text-lg font-semibold">Nenhuma conversa iniciada ainda</p>
+            <p className="max-w-sm text-muted-foreground">
               Interesse-se por produtos para começar conversas
             </p>
             <Button asChild>
