@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar } from '@/components/ui/avatar'
 import Header from '@/components/Header'
 import InterestedButton from '@/components/InterestedButton'
+import DeleteProductButton from '@/components/DeleteProductButton'
 import ProductImage from '@/components/ProductImage'
 
 interface ProductPageProps {
@@ -132,10 +133,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   />
                 </>
               ) : (
-                <div className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-mint px-4 py-4 text-sm font-semibold text-primary">
-                  <Sparkles className="h-4 w-4" aria-hidden="true" />
-                  Este é seu produto
-                </div>
+                <>
+                  <div className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-mint px-4 py-4 text-sm font-semibold text-primary">
+                    <Sparkles className="h-4 w-4" aria-hidden="true" />
+                    Este é seu produto
+                  </div>
+                  <DeleteProductButton
+                    productId={product.id}
+                    productTitle={product.title}
+                    redirectTo="/dashboard"
+                    className="h-14"
+                  />
+                </>
               )}
             </div>
           </div>

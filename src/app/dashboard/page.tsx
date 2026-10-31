@@ -9,6 +9,7 @@ import { Avatar } from '@/components/ui/avatar'
 import Header from '@/components/Header'
 import ProductImage from '@/components/ProductImage'
 import Reveal from '@/components/Reveal'
+import DeleteProductButton from '@/components/DeleteProductButton'
 import { formatRelativeDate, getFirstName } from '@/lib/format'
 
 export default async function Dashboard() {
@@ -126,10 +127,10 @@ export default async function Dashboard() {
               {userProducts.length > 0 ? (
                 <ul>
                   {userProducts.map((product) => (
-                    <li key={product.id}>
+                    <li key={product.id} className="group/row flex items-center gap-1 rounded-2xl pr-2 transition-colors duration-200 hover:bg-background">
                       <Link
                         href={`/products/${product.id}`}
-                        className="group flex items-center gap-4 rounded-2xl p-3 transition-colors duration-200 hover:bg-background"
+                        className="group flex min-w-0 flex-1 items-center gap-4 rounded-2xl p-3"
                       >
                         <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl">
                           <ProductImage src={product.image} alt={product.title} category={product.category} iconSize="sm" sizes="56px" />
@@ -142,6 +143,7 @@ export default async function Dashboard() {
                         </div>
                         <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
                       </Link>
+                      <DeleteProductButton productId={product.id} productTitle={product.title} variant="icon" />
                     </li>
                   ))}
                 </ul>
