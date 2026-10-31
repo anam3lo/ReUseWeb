@@ -3,10 +3,14 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Spinner } from '@/components/ui/spinner'
+import AuthLayout, { FormAlert } from '@/components/AuthLayout'
+import PasswordInput from '@/components/PasswordInput'
+import { cn } from '@/lib/utils'
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
@@ -15,6 +19,7 @@ export default function SignUp() {
     password: '',
     confirmPassword: ''
   })
+  const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
@@ -24,6 +29,10 @@ export default function SignUp() {
       ...formData,
       [e.target.name]: e.target.value
     })
+  }
+
+  const setField = (name: 'password' | 'confirmPassword') => (value: string) => {
+    setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,98 +86,115 @@ export default function SignUp() {
     }
   }
 
+  const passwordLongEnough = formData.password.length >= 6
+  const passwordsMatch = formData.confirmPassword.length > 0 && formData.password === formData.confirmPassword
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-green-600 mb-2">ReUse</h1>
-          <h2 className="text-2xl font-bold text-gray-900">Criar sua conta</h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Ou{' '}
-            <Link href="/auth/signin" className="font-medium text-green-600 hover:text-green-500">
-              faça login na sua conta
-            </Link>
-          </p>
+    <AuthLayout
+      mode="signup"
+      title="Criar sua conta"
+      description={
+        <>
+          Ou{' '}
+          <Link href="/auth/signin" className="font-semibold text-primary underline-offset-4 hover:underline">
+            faça login na sua conta
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {error && <FormAlert tone="error">{error}</FormAlert>}
+
+        <div className="space-y-2.5">
+          <Label htmlFor="name">Nome completo</Label>
+          <Input
+            id="name"
+            name="name"
+            type="text"
+            autoComplete="name"
+            required
+            value={formData.name}
+            onChange={handleChange}
+            placeholder="Seu nome completo"
+          />
         </div>
-        
-        <Card className="shadow-lg">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Criar Conta</CardTitle>
-            <CardDescription className="text-center">
-              Preencha os dados abaixo para criar sua conta
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
-                  {error}
-                </div>
-              )}
-              
-              <div className="space-y-2">
-                <Label htmlFor="name">Nome completo</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="Seu nome completo"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="seu@email.com"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Mínimo 6 caracteres"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmar senha</Label>
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  required
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  placeholder="Digite a senha novamente"
-                />
-              </div>
-              
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Criando conta...' : 'Criar conta'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+
+        <div className="space-y-2.5">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="seu@email.com"
+          />
+        </div>
+
+        <div className="space-y-2.5">
+          <Label htmlFor="password">Senha</Label>
+          <PasswordInput
+            id="password"
+            name="password"
+            autoComplete="new-password"
+            value={formData.password}
+            onChange={setField('password')}
+            placeholder="Mínimo 6 caracteres"
+            visible={showPassword}
+            onToggle={() => setShowPassword((v) => !v)}
+          />
+        </div>
+
+        <div className="space-y-2.5">
+          <Label htmlFor="confirmPassword">Confirmar senha</Label>
+          <PasswordInput
+            id="confirmPassword"
+            name="confirmPassword"
+            autoComplete="new-password"
+            value={formData.confirmPassword}
+            onChange={setField('confirmPassword')}
+            placeholder="Digite a senha novamente"
+            visible={showPassword}
+            onToggle={() => setShowPassword((v) => !v)}
+          />
+        </div>
+
+        {/* Dicas da senha em tempo real */}
+        <ul className="space-y-1.5 text-[13px]" aria-live="polite">
+          <PasswordHint ok={passwordLongEnough}>Pelo menos 6 caracteres</PasswordHint>
+          <PasswordHint ok={passwordsMatch}>As senhas coincidem</PasswordHint>
+        </ul>
+
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full"
+          disabled={isLoading}
+        >
+          {isLoading && <Spinner label="Criando conta" />}
+          {isLoading ? 'Criando conta...' : 'Criar conta'}
+        </Button>
+      </form>
+    </AuthLayout>
+  )
+}
+
+function PasswordHint({ ok, children }: { ok: boolean; children: React.ReactNode }) {
+  return (
+    <li className={cn('flex items-center gap-2 transition-colors duration-200', ok ? 'text-primary' : 'text-muted-foreground')}>
+      <span
+        className={cn(
+          'flex h-4 w-4 items-center justify-center rounded-full border transition-[background-color,border-color] duration-200',
+          ok ? 'border-primary bg-primary text-white' : 'border-input'
+        )}
+        aria-hidden="true"
+      >
+        {ok && <Check className="h-3 w-3 animate-pop" strokeWidth={3} />}
+      </span>
+      {children}
+      <span className="sr-only">{ok ? '(ok)' : '(pendente)'}</span>
+    </li>
   )
 }

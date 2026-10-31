@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
 import { Heart, Check } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface InterestedButtonProps {
   productId: string
@@ -18,7 +20,7 @@ export default function InterestedButton({ productId, ownerId, currentUserId }: 
     if (isInterested) return
 
     setIsLoading(true)
-    
+
     try {
       // Enviar mensagem automática de interesse
       const response = await fetch('/api/messages', {
@@ -50,27 +52,28 @@ export default function InterestedButton({ productId, ownerId, currentUserId }: 
   }
 
   return (
-    <Button 
-      size="lg" 
-      variant="outline" 
-      className="flex-1"
+    <Button
+      size="lg"
+      variant={isInterested ? 'accent' : 'outline'}
+      className={cn('h-14 flex-1 text-base', isInterested && 'disabled:opacity-100')}
       onClick={handleInterested}
       disabled={isLoading || isInterested}
+      aria-live="polite"
     >
       {isLoading ? (
         <>
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2"></div>
+          <Spinner className="h-5 w-5" label="Enviando interesse" />
           Enviando...
         </>
       ) : isInterested ? (
         <>
-          <Check className="h-4 w-4 mr-2" />
+          <Check className="h-5 w-5 animate-pop" aria-hidden="true" />
           Interesse Enviado!
         </>
       ) : (
         <>
-          <Heart className="h-4 w-4 mr-2" />
-          Interessado
+          <Heart className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" aria-hidden="true" />
+          Tenho interesse
         </>
       )}
     </Button>

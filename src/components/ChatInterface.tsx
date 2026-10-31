@@ -1,11 +1,15 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
+import { ArrowLeft, MessagesSquare, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Send, Phone, Video, MoreVertical } from 'lucide-react'
-import Image from 'next/image'
+import { Avatar } from '@/components/ui/avatar'
+import { Spinner } from '@/components/ui/spinner'
+import { Skeleton } from '@/components/ui/skeleton'
+import ProductImage from '@/components/ProductImage'
+import { cn } from '@/lib/utils'
 
 /**
  * Tipagem das conversas (compatível com o page.tsx)
@@ -32,6 +36,9 @@ export interface ConversationData {
 interface ChatInterfaceProps {
   conversations: ConversationData[]
   currentUserId: string
+  /** Voltar para a lista de conversas (usado no celular) */
+  onBack?: () => void
+  className?: string
 }
 
 /**
@@ -40,11 +47,14 @@ interface ChatInterfaceProps {
 export default function ChatInterface({
   conversations,
   currentUserId,
+  onBack,
+  className,
 }: ChatInterfaceProps): JSX.Element {
   const [selectedConversation, setSelectedConversation] = useState<ConversationData | null>(null)
   const [messages, setMessages] = useState<any[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   /**
@@ -67,6 +77,7 @@ export default function ChatInterface({
   useEffect(() => {
     const loadMessages = async () => {
       if (selectedConversation) {
+        setIsLoadingMessages(true)
         try {
           const response = await fetch(
             `/api/messages?productId=${selectedConversation.product.id}&otherUserId=${selectedConversation.otherUser.id}`
@@ -78,6 +89,8 @@ export default function ChatInterface({
         } catch (error) {
           console.error('Erro ao carregar mensagens:', error)
           setMessages([])
+        } finally {
+          setIsLoadingMessages(false)
         }
       }
     }
@@ -89,7 +102,7 @@ export default function ChatInterface({
    * Scroll automático para a última mensagem
    */
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }, [messages])
 
   /**
@@ -139,14 +152,18 @@ export default function ChatInterface({
    */
   if (!selectedConversation) {
     return (
-      <Card className="h-96">
-        <CardContent className="flex items-center justify-center h-full">
-          <div className="text-center text-gray-500">
-            <div className="text-4xl mb-4">💬</div>
-            <p>Selecione uma conversa para começar a conversar</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className={cn('flex h-full flex-col items-center justify-center gap-4 bg-surface p-8 text-center', className)}>
+        <span className="flex h-16 w-16 items-center justify-center rounded-3xl bg-mint">
+          <MessagesSquare className="h-8 w-8 text-primary" aria-hidden="true" />
+        </span>
+        <div className="space-y-1">
+          <p className="font-display text-lg font-semibold">Suas conversas</p>
+          <p className="max-w-xs text-sm text-muted-foreground">
+            Selecione uma conversa para começar a conversar
+          </p>
+        </div>
+        <span className="sr-only">{conversations.length} conversas disponíveis</span>
+      </div>
     )
   }
 
@@ -154,80 +171,99 @@ export default function ChatInterface({
    * Renderização principal da conversa
    */
   return (
-    <Card className="h-96 flex flex-col">
+    <div className={cn('flex h-full min-h-0 flex-col bg-surface', className)}>
       {/* Header da Conversa */}
-      <CardHeader className="pb-4 border-b">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            {selectedConversation.product.image && (
-              <Image
-                src={selectedConversation.product.image}
-                alt={selectedConversation.product.title}
-                width={40}
-                height={40}
-                className="rounded-full object-cover"
-              />
-            )}
-            <div>
-              <CardTitle className="text-lg">{selectedConversation.otherUser.name}</CardTitle>
-              <p className="text-sm text-gray-500">{selectedConversation.product.title}</p>
-            </div>
+      <div className="flex shrink-0 items-center gap-3 border-b bg-card px-3 py-3 sm:px-5">
+        {onBack && (
+          <Button variant="ghost" size="icon-sm" onClick={onBack} aria-label="Voltar para conversas" className="lg:hidden">
+            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+          </Button>
+        )}
+        <div className="relative">
+          <div className="h-11 w-11 overflow-hidden rounded-2xl">
+            <ProductImage
+              src={selectedConversation.product.image}
+              alt={selectedConversation.product.title}
+              iconSize="sm"
+              sizes="44px"
+            />
           </div>
-          <div className="flex items-center space-x-2">
-            <Button size="sm" variant="outline">
-              <Phone className="h-4 w-4" />
-            </Button>
-            <Button size="sm" variant="outline">
-              <Video className="h-4 w-4" />
-            </Button>
-            <Button size="sm" variant="outline">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </div>
+          <Avatar
+            name={selectedConversation.otherUser.name}
+            size="sm"
+            className="absolute -bottom-1.5 -right-1.5 h-6 w-6 border-2 border-card text-[10px]"
+          />
         </div>
-      </CardHeader>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-semibold">{selectedConversation.otherUser.name}</p>
+          <p className="truncate text-[13px] text-muted-foreground">{selectedConversation.product.title}</p>
+        </div>
+        <Button variant="outline" size="sm" asChild className="max-sm:hidden">
+          <Link href={`/products/${selectedConversation.product.id}`}>Ver produto</Link>
+        </Button>
+      </div>
 
       {/* Mensagens */}
-      <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message) => {
-          const isOwn = message.senderId === currentUserId
-          return (
-            <div key={message.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-              <div
-                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                  isOwn ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-900'
-                }`}
-              >
-                <p className="text-sm">{message.content}</p>
-                <p
-                  className={`text-xs mt-1 ${
-                    isOwn ? 'text-green-100' : 'text-gray-500'
-                  }`}
+      <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto px-3 py-5 sm:px-6" aria-live="polite">
+        {isLoadingMessages && messages.length === 0 ? (
+          <div className="space-y-3" aria-label="Carregando mensagens">
+            <Skeleton className="h-12 w-2/3 rounded-2xl" />
+            <Skeleton className="ml-auto h-12 w-1/2 rounded-2xl" />
+            <Skeleton className="h-12 w-3/5 rounded-2xl" />
+          </div>
+        ) : (
+          messages.map((message) => {
+            const isOwn = message.senderId === currentUserId
+            return (
+              <div key={message.id} className={cn('flex animate-message-in', isOwn ? 'justify-end' : 'justify-start')}>
+                <div
+                  className={cn(
+                    'max-w-[80%] px-4 py-2.5 sm:max-w-[65%]',
+                    isOwn
+                      ? 'rounded-[20px] rounded-br-md bg-primary text-primary-foreground'
+                      : 'rounded-[20px] rounded-bl-md border bg-card text-foreground'
+                  )}
                 >
-                  {formatTime(message.timestamp)}
-                </p>
+                  <p className="whitespace-pre-wrap break-words text-[15px] leading-snug">{message.content}</p>
+                  <p
+                    className={cn('mt-1 text-right text-[11px]', isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground')}
+                  >
+                    {formatTime(message.timestamp)}
+                  </p>
+                </div>
               </div>
-            </div>
-          )
-        })}
+            )
+          })
+        )}
         <div ref={messagesEndRef} />
-      </CardContent>
+      </div>
 
       {/* Campo de envio */}
-      <div className="p-4 border-t">
-        <form onSubmit={handleSendMessage} className="flex space-x-2">
+      <div className="shrink-0 border-t bg-card p-3 sm:px-5">
+        <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+          <label htmlFor="chat-message" className="sr-only">
+            Mensagem
+          </label>
           <Input
+            id="chat-message"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Digite sua mensagem..."
-            className="flex-1"
+            className="h-12 flex-1 rounded-full bg-background px-5"
             disabled={isLoading}
+            autoComplete="off"
           />
-          <Button type="submit" disabled={isLoading || !newMessage.trim()}>
-            <Send className="h-4 w-4" />
+          <Button
+            type="submit"
+            size="icon"
+            className="h-12 w-12"
+            disabled={isLoading || !newMessage.trim()}
+            aria-label="Enviar mensagem"
+          >
+            {isLoading ? <Spinner label="Enviando" /> : <Send className="h-[18px] w-[18px]" aria-hidden="true" />}
           </Button>
         </form>
       </div>
-    </Card>
+    </div>
   )
 }
