@@ -3,7 +3,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
-import { CalendarDays, ChevronLeft, Mail, MessageCircle, Sparkles } from 'lucide-react'
+import { CalendarDays, ChevronLeft, Mail, MessageCircle, Pencil, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar } from '@/components/ui/avatar'
@@ -133,18 +133,26 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   />
                 </>
               ) : (
-                <>
-                  <div className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-mint px-4 py-4 text-sm font-semibold text-primary">
+                <div className="flex w-full flex-col gap-3">
+                  <div className="flex items-center justify-center gap-2 rounded-2xl bg-mint px-4 py-3 text-sm font-semibold text-primary">
                     <Sparkles className="h-4 w-4" aria-hidden="true" />
                     Este é seu produto
                   </div>
-                  <DeleteProductButton
-                    productId={product.id}
-                    productTitle={product.title}
-                    redirectTo="/dashboard"
-                    className="h-14"
-                  />
-                </>
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <Button size="lg" className="h-14 flex-1 text-base" asChild>
+                      <Link href={`/products/${product.id}/edit`}>
+                        <Pencil className="h-5 w-5" aria-hidden="true" />
+                        Editar anúncio
+                      </Link>
+                    </Button>
+                    <DeleteProductButton
+                      productId={product.id}
+                      productTitle={product.title}
+                      redirectTo="/dashboard"
+                      className="h-14"
+                    />
+                  </div>
+                </div>
               )}
             </div>
           </div>
