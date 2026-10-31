@@ -3,7 +3,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronRight, Inbox, MessageCircle, PackageOpen, Plus, RefreshCw, Tag } from 'lucide-react'
+import { ChevronRight, Inbox, MessageCircle, PackageOpen, Pencil, Plus, RefreshCw, Tag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
 import Header from '@/components/Header'
@@ -142,6 +142,13 @@ export default async function Dashboard() {
                           </p>
                         </div>
                         <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
+                      </Link>
+                      <Link
+                        href={`/products/${product.id}/edit`}
+                        aria-label={`Editar ${product.title}`}
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-mint hover:text-primary"
+                      >
+                        <Pencil className="h-4 w-4" aria-hidden="true" />
                       </Link>
                       <DeleteProductButton productId={product.id} productTitle={product.title} variant="icon" />
                     </li>
