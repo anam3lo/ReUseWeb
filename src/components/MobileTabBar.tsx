@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Home, LayoutDashboard, MessageCircle, Plus, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { CountBadge } from '@/components/ui/count-badge'
+import { useUnreadMessages } from '@/components/UnreadMessagesProvider'
 
 const HIDDEN_ON = ['/auth', '/maintenance']
 
@@ -22,6 +24,7 @@ const TABS = [
 export default function MobileTabBar() {
   const pathname = usePathname() ?? '/'
   const { data: session } = useSession()
+  const { count: unreadCount } = useUnreadMessages()
 
   if (!session || HIDDEN_ON.some((path) => pathname.startsWith(path))) return null
 
@@ -51,7 +54,7 @@ export default function MobileTabBar() {
               <Plus className="h-6 w-6" strokeWidth={2.4} aria-hidden="true" />
             </Link>
           </li>
-          <TabItem tab={third} active={third.match(pathname)} />
+          <TabItem tab={third} active={third.match(pathname)} badge={unreadCount} />
           <TabItem tab={fourth} active={fourth.match(pathname)} />
         </ul>
       </nav>
@@ -59,19 +62,23 @@ export default function MobileTabBar() {
   )
 }
 
-function TabItem({ tab, active }: { tab: (typeof TABS)[number]; active: boolean }) {
+function TabItem({ tab, active, badge = 0 }: { tab: (typeof TABS)[number]; active: boolean; badge?: number }) {
   const Icon = tab.icon
   return (
     <li>
       <Link
         href={tab.href}
         aria-current={active ? 'page' : undefined}
+        aria-label={badge > 0 ? `${tab.label}, ${badge} ${badge === 1 ? 'mensagem nova' : 'mensagens novas'}` : undefined}
         className={cn(
           'flex min-w-[56px] flex-col items-center gap-1 rounded-2xl px-2 py-1.5 text-[11px] font-medium transition-colors duration-200 active:scale-95',
           active ? 'text-accent' : 'text-background/70 hover:text-background'
         )}
       >
-        <Icon className="h-[22px] w-[22px]" aria-hidden="true" />
+        <span className="relative">
+          <Icon className="h-[22px] w-[22px]" aria-hidden="true" />
+          <CountBadge count={badge} placement="corner" ringClassName="border-foreground" />
+        </span>
         {tab.label}
       </Link>
     </li>

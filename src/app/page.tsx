@@ -9,6 +9,7 @@ import SiteFooter from '@/components/SiteFooter'
 import ProductCard from '@/components/ProductCard'
 import ProductImage from '@/components/ProductImage'
 import Reveal from '@/components/Reveal'
+import LoggedInHome from '@/components/home/LoggedInHome'
 import { PRODUCT_CATEGORIES, getCategoryStyle } from '@/lib/categories'
 
 const STEPS = [
@@ -31,6 +32,12 @@ const STEPS = [
 
 export default async function Home() {
   const session = await getServerSession(authOptions)
+
+  // Usuário logado vê o início "de uso" (o de baixo é a página de apresentação)
+  if (session) {
+    // Chamado como função (componente de servidor assíncrono)
+    return await LoggedInHome({ userId: session.user.id, userName: session.user.name ?? '' })
+  }
 
   // Buscar produtos recentes
   const recentProducts = await prisma.product.findMany({

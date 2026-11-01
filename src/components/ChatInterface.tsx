@@ -9,6 +9,7 @@ import { Avatar } from '@/components/ui/avatar'
 import { Spinner } from '@/components/ui/spinner'
 import { Skeleton } from '@/components/ui/skeleton'
 import ProductImage from '@/components/ProductImage'
+import { useUnreadMessages } from '@/components/UnreadMessagesProvider'
 import { cn } from '@/lib/utils'
 
 /**
@@ -56,6 +57,7 @@ export default function ChatInterface({
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingMessages, setIsLoadingMessages] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const { count: unreadCount, refresh: refreshUnread } = useUnreadMessages()
 
   /**
    * Escuta o evento de seleção de conversa (vindo do page.tsx)
@@ -85,6 +87,17 @@ export default function ChatInterface({
           if (response.ok) {
             const data = await response.json()
             setMessages(data.messages || [])
+
+            // Abriu a conversa: marca como lidas as mensagens recebidas e atualiza o contador
+            await fetch('/api/messages/read', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                productId: selectedConversation.product.id,
+                otherUserId: selectedConversation.otherUser.id,
+              }),
+            })
+            refreshUnread()
           }
         } catch (error) {
           console.error('Erro ao carregar mensagens:', error)
@@ -96,7 +109,8 @@ export default function ChatInterface({
     }
 
     loadMessages()
-  }, [selectedConversation, currentUserId])
+    // unreadCount: quando chega mensagem nova, recarrega a conversa aberta
+  }, [selectedConversation, currentUserId, refreshUnread, unreadCount])
 
   /**
    * Scroll automático para a última mensagem

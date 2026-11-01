@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     // Agrupar conversas por produto e usuário
     const conversationMap = new Map()
     
-    messages.forEach((message: { senderId: string; receiverId: string; receiver: any; sender: any; productId: any; product: any }) => {
+    messages.forEach((message: { senderId: string; receiverId: string; read: boolean; receiver: any; sender: any; productId: any; product: any }) => {
       const otherUserId = message.senderId === session.user.id 
         ? message.receiverId 
         : message.senderId
@@ -71,8 +71,8 @@ export async function GET(request: NextRequest) {
         })
       }
       
-      // Contar mensagens não lidas (simplificado)
-      if (message.receiverId === session.user.id) {
+      // Contar mensagens recebidas que ainda não foram lidas
+      if (message.receiverId === session.user.id && !message.read) {
         conversationMap.get(key).unreadCount++
       }
     })

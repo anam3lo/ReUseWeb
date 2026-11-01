@@ -8,7 +8,9 @@ import { MessagesSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
+import { CountBadge } from '@/components/ui/count-badge'
 import Header from '@/components/Header'
+import { useUnreadMessages } from '@/components/UnreadMessagesProvider'
 import ChatInterface, { ConversationData } from '@/components/ChatInterface'
 import { cn } from '@/lib/utils'
 import { formatRelativeDate } from '@/lib/format'
@@ -19,6 +21,7 @@ export default function ChatPage() {
   const [conversationList, setConversationList] = useState<ConversationData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
+  const { count: unreadCount } = useUnreadMessages()
 
   /**
    * Função memoizada para carregar conversas
@@ -52,11 +55,28 @@ export default function ChatPage() {
     loadConversations()
   }, [session, status, router, loadConversations])
 
-  const conversationKey = (conversation: ConversationData, index: number) =>
-    conversation.id ?? `${conversation.product.id}-${conversation.otherUser.id}-${index}`
+  /**
+   * O contador de não lidas mudou (chegou mensagem nova ou uma conversa foi lida):
+   * atualiza a lista de conversas
+   */
+  useEffect(() => {
+    if (status === 'authenticated') {
+      loadConversations()
+    }
+  }, [unreadCount, status, loadConversations])
+
+  // Chave estável por conversa (produto + outra pessoa), mesmo quando a lista é reordenada
+  const conversationKey = (conversation: ConversationData) =>
+    conversation.id ?? `${conversation.product.id}-${conversation.otherUser.id}`
 
   const selectConversation = (conversation: ConversationData | null, key: string | null) => {
     setSelectedKey(key)
+    // Ao abrir, a conversa deixa de aparecer como não lida na lista
+    if (conversation && conversation.unreadCount > 0) {
+      setConversationList((list) =>
+        list.map((item) => (item === conversation ? { ...item, unreadCount: 0 } : item))
+      )
+    }
     const event = new CustomEvent('selectConversation', {
       detail: conversation,
     })
@@ -124,8 +144,8 @@ export default function ChatPage() {
                 </p>
               </div>
               <ul className="min-h-0 flex-1 overflow-y-auto p-2">
-                {conversationList.map((conversation, index) => {
-                  const key = conversationKey(conversation, index)
+                {conversationList.map((conversation) => {
+                  const key = conversationKey(conversation)
                   const active = key === selectedKey
                   return (
                     <li key={key}>
@@ -142,7 +162,7 @@ export default function ChatPage() {
                         <Avatar name={conversation.otherUser.name} size="lg" tone={active ? 'primary' : 'accent'} />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
-                            <h3 className="truncate font-sans text-[15px] font-semibold">
+                            <h3 className={cn('truncate font-sans text-[15px]', conversation.unreadCount > 0 ? 'font-bold' : 'font-semibold')}>
                               {conversation.otherUser.name}
                             </h3>
                             <span className="shrink-0 text-xs text-muted-foreground">
@@ -153,13 +173,17 @@ export default function ChatPage() {
                             {conversation.product.title}
                           </p>
                           <div className="flex items-center justify-between gap-2">
-                            <p className="truncate text-[13px] text-muted-foreground">
+                            <p
+                              className={cn(
+                                'truncate text-[13px]',
+                                conversation.unreadCount > 0 ? 'font-semibold text-foreground' : 'text-muted-foreground'
+                              )}
+                            >
                               {conversation.lastMessage.content}
                             </p>
+                            <CountBadge count={conversation.unreadCount} className="shrink-0" />
                             {conversation.unreadCount > 0 && (
-                              <span className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-bold text-primary-foreground">
-                                {conversation.unreadCount}
-                              </span>
+                              <span className="sr-only">{conversation.unreadCount} não lidas</span>
                             )}
                           </div>
                         </div>
