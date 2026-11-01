@@ -17,6 +17,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
+import { CountBadge } from '@/components/ui/count-badge'
+import { useUnreadMessages } from '@/components/UnreadMessagesProvider'
 import Logo from '@/components/Logo'
 import SignOutButton from '@/components/SignOutButton'
 import { cn } from '@/lib/utils'
@@ -40,6 +42,7 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const { count: unreadCount } = useUnreadMessages()
 
   // Sombra sutil no header ao rolar a página
   useEffect(() => {
@@ -97,12 +100,18 @@ export default function Header() {
                   key={link.href}
                   href={link.href}
                   aria-current={active ? 'page' : undefined}
+                  aria-label={
+                    link.href === '/chat' && unreadCount > 0
+                      ? `${link.label}, ${unreadCount} ${unreadCount === 1 ? 'mensagem nova' : 'mensagens novas'}`
+                      : undefined
+                  }
                   className={cn(
-                    'rounded-full px-4 py-2.5 text-sm font-medium transition-colors duration-200',
+                    'inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition-colors duration-200',
                     active ? 'bg-foreground text-background' : 'text-foreground hover:bg-secondary'
                   )}
                 >
                   {link.label}
+                  {link.href === '/chat' && <CountBadge count={unreadCount} />}
                 </Link>
               )
             })}
@@ -134,7 +143,15 @@ export default function Header() {
                   aria-label="Abrir menu da conta"
                   className="flex items-center gap-1.5 rounded-full p-1 pr-2 transition-colors hover:bg-secondary"
                 >
-                  <Avatar name={user.name} />
+                  <span className="relative">
+                    <Avatar name={user.name} />
+                    {unreadCount > 0 && (
+                      <span
+                        className="absolute -right-0.5 -top-0.5 h-3 w-3 animate-pop rounded-full border-2 border-background bg-destructive"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </span>
                   <ChevronDown
                     className={cn('h-4 w-4 text-muted-foreground transition-transform duration-200', menuOpen && 'rotate-180')}
                     aria-hidden="true"
@@ -152,7 +169,7 @@ export default function Header() {
                     <div className="my-1 h-px bg-border" />
                     <MenuLink href="/profile" icon={User}>Meu perfil</MenuLink>
                     <MenuLink href="/dashboard" icon={LayoutDashboard}>Dashboard</MenuLink>
-                    <MenuLink href="/chat" icon={MessageCircle}>Conversas</MenuLink>
+                    <MenuLink href="/chat" icon={MessageCircle} badge={unreadCount}>Conversas</MenuLink>
                     <div className="my-1 h-px bg-border" />
                     <SignOutButton variant="menu" />
                   </div>
@@ -199,7 +216,13 @@ export default function Header() {
                   </div>
                 </div>
                 {NAV_LINKS.map((link) => (
-                  <MobileLink key={link.href} href={link.href} icon={link.icon} active={isActive(pathname, link.href)}>
+                  <MobileLink
+                    key={link.href}
+                    href={link.href}
+                    icon={link.icon}
+                    active={isActive(pathname, link.href)}
+                    badge={link.href === '/chat' ? unreadCount : 0}
+                  >
                     {link.label}
                   </MobileLink>
                 ))}
@@ -236,10 +259,12 @@ export default function Header() {
 function MenuLink({
   href,
   icon: Icon,
+  badge = 0,
   children,
 }: {
   href: string
   icon: typeof User
+  badge?: number
   children: React.ReactNode
 }) {
   return (
@@ -249,7 +274,9 @@ function MenuLink({
       className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors hover:bg-secondary"
     >
       <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-      {children}
+      <span className="flex-1">{children}</span>
+      <CountBadge count={badge} />
+      {badge > 0 && <span className="sr-only">({badge} novas)</span>}
     </Link>
   )
 }
@@ -258,11 +285,13 @@ function MobileLink({
   href,
   icon: Icon,
   active,
+  badge = 0,
   children,
 }: {
   href: string
   icon: typeof User
   active: boolean
+  badge?: number
   children: React.ReactNode
 }) {
   return (
@@ -275,7 +304,9 @@ function MobileLink({
       )}
     >
       <Icon className="h-5 w-5" aria-hidden="true" />
-      {children}
+      <span className="flex-1">{children}</span>
+      <CountBadge count={badge} />
+      {badge > 0 && <span className="sr-only">({badge} novas)</span>}
     </Link>
   )
 }
